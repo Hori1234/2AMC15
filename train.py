@@ -15,42 +15,76 @@ from world import Environment
 
 # Add your agents here
 from agents.q_learn_agent import QLearn_Agent
+from agents.mc_agent import MCAgent
+
 
 def parse_args():
     p = ArgumentParser(description="DIC Reinforcement Learning Trainer.")
-    p.add_argument("GRID", type=Path, nargs="+",
-                   help="Paths to the grid file to use. There can be more than "
-                        "one.")
-    p.add_argument("--no_gui", action="store_true",
-                   help="Disables rendering to train faster")
-    p.add_argument("--sigma", type=float, default=0.,
-                   help="Sigma value for the stochasticity of the environment.")
-    p.add_argument("--fps", type=int, default=30,
-                   help="Frames per second to render at. Only used if "
-                        "no_gui is not set.")
-    p.add_argument("--iter", type=int, default=1000,
-                   help="Number of iterations to go through.")
-    p.add_argument("--random_seed", type=int, default=0,
-                   help="Random seed value for the environment.")
-    p.add_argument("--out", type=Path,
-                   help="Where to save training results.")
+    p.add_argument(
+        "GRID",
+        type=Path,
+        nargs="+",
+        help="Paths to the grid file to use. There can be more than " "one.",
+    )
+    p.add_argument(
+        "--no_gui", action="store_true", help="Disables rendering to train faster"
+    )
+    p.add_argument(
+        "--sigma",
+        type=float,
+        default=0.0,
+        help="Sigma value for the stochasticity of the environment.",
+    )
+    p.add_argument(
+        "--fps",
+        type=int,
+        default=30,
+        help="Frames per second to render at. Only used if " "no_gui is not set.",
+    )
+    p.add_argument(
+        "--iter", type=int, default=1000, help="Number of iterations to go through."
+    )
+    p.add_argument(
+        "--random_seed",
+        type=int,
+        default=0,
+        help="Random seed value for the environment.",
+    )
+    p.add_argument("--out", type=Path, help="Where to save training results.")
 
     return p.parse_args()
 
 
-def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
-         sigma: float, out: Path, random_seed: int):
+def main(
+    grid_paths: list[Path],
+    no_gui: bool,
+    iters: int,
+    fps: int,
+    sigma: float,
+    out: Path,
+    random_seed: int,
+):
     """Main loop of the program."""
 
     for grid in grid_paths:
         # Set up the environment and reset it to its initial state
-        env = Environment(grid, no_gui, n_agents=1, agent_start_pos=[(5,10)],
-                          sigma=sigma, target_fps=fps, random_seed=random_seed)
+        env = Environment(
+            grid,
+            no_gui,
+            n_agents=1,
+            agent_start_pos=[(5, 10)],
+            sigma=sigma,
+            target_fps=fps,
+            random_seed=random_seed,
+        )
         obs, info = env.get_observation()
 
         # Set up the agents from scratch for every grid
         # Add your agents here
-        agents = [QLearn_Agent(0,obs)]
+        agents = [
+            # QLearn_Agent(0,obs),
+            MCAgent(0, obs)
+        ]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
@@ -68,11 +102,19 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
             obs, info, world_stats = env.reset()
             print(world_stats)
 
-            Environment.evaluate_agent(grid, [agent], 1, out, 0.2,agent_start_pos=[(5,10)])
+            Environment.evaluate_agent(
+                grid, [agent], 1, out, 0.2, agent_start_pos=[(5, 10)]
+            )
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args()
-    main(args.GRID, args.no_gui, args.iter, args.fps, args.sigma, Path("results/"),
-         args.random_seed)
+    main(
+        args.GRID,
+        args.no_gui,
+        args.iter,
+        args.fps,
+        args.sigma,
+        Path("results/"),
+        args.random_seed,
+    )
