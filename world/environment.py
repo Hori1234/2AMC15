@@ -28,8 +28,8 @@ except ModuleNotFoundError:
     from os import pardir
     import sys
 
-    root_path = path.abspath(path.join(
-        path.join(path.abspath(__file__), pardir), pardir)
+    root_path = path.abspath(
+        path.join(path.join(path.abspath(__file__), pardir), pardir)
     )
 
     if root_path not in sys.path:
@@ -42,15 +42,17 @@ except ModuleNotFoundError:
 
 
 class Environment:
-    def __init__(self,
-                 grid_fp: Path,
-                 no_gui: bool = False,
-                 n_agents: int = 1,
-                 sigma: float = 0.,
-                 agent_start_pos: list[tuple[int, int]] = None,
-                 reward_fn: callable = None,
-                 target_fps: int = 30,
-                 random_seed: int | float | str | bytes | bytearray | None = 0):
+    def __init__(
+        self,
+        grid_fp: Path,
+        no_gui: bool = False,
+        n_agents: int = 1,
+        sigma: float = 0.0,
+        agent_start_pos: list[tuple[int, int]] = None,
+        reward_fn: callable = None,
+        target_fps: int = 30,
+        random_seed: int | float | str | bytes | bytearray | None = 0,
+    ):
         """Creates the grid environment for the robot vacuum.
 
         Creates a Grid environment from the provided grid file. The number of
@@ -94,21 +96,22 @@ class Environment:
         self.grid = None
         self.no_gui = no_gui
         if target_fps <= 0:
-            self.target_spf = 0.
+            self.target_spf = 0.0
         else:
-            self.target_spf = 1. / target_fps
+            self.target_spf = 1.0 / target_fps
         self.gui = None
 
         # Set up initial agent positions
-        self.n_agents = n_agents                 # Number of active agents
-        self.agent_pos = None                    # Current agent positions
-        self.agent_start_pos = agent_start_pos   # Where agents initially start
+        self.n_agents = n_agents  # Number of active agents
+        self.agent_pos = None  # Current agent positions
+        self.agent_start_pos = agent_start_pos  # Where agents initially start
         self.agent_done = [False] * n_agents
 
         # Set up reward function
         if reward_fn is None:
             warn("No reward function provided. Using default reward.")
-            self.reward_fn = self._default_reward_function
+            # self.reward_fn = self._default_reward_function
+            self.reward_fn = self.count_heuristic
         else:
             self.reward_fn = reward_fn
         self.info = self._reset_info()
@@ -116,7 +119,6 @@ class Environment:
 
         self.environment_ready = False
         self.reset()
-
 
     def _reset_info(self) -> dict:
         """Resets the info dictionary.
@@ -137,18 +139,22 @@ class Environment:
         agent 1 cleaned 0 dirt tiles, and agent 2 cleaned 0 dirt tiles, then
         dirt_cleaned would be [1, 0, 0]
         """
-        return {"dirt_cleaned": [0] * self.n_agents,
-                "agent_moved": [False] * self.n_agents,
-                "agent_charging": self.agent_done,
-                "agent_pos": self.agent_pos}
+        return {
+            "dirt_cleaned": [0] * self.n_agents,
+            "agent_moved": [False] * self.n_agents,
+            "agent_charging": self.agent_done,
+            "agent_pos": self.agent_pos,
+        }
 
     @staticmethod
     def _reset_world_stats() -> dict:
-        return {"total_dirt_cleaned": 0,
-                "total_steps": 0,
-                "total_agent_moves": 0,
-                "total_agents_at_charger": 0,
-                "total_failed_moves": 0}
+        return {
+            "total_dirt_cleaned": 0,
+            "total_steps": 0,
+            "total_agent_moves": 0,
+            "total_agents_at_charger": 0,
+            "total_failed_moves": 0,
+        }
 
     def _initialize_agent_pos(self):
         """Initializes agent position from the givin initial variables.
@@ -168,13 +174,15 @@ class Environment:
                 else:
                     # Agent is placed on walls/obstacle/dirt/charger
                     raise ValueError(
-                        "Attempted to place agent on top of wall or "
-                        "charger")
+                        "Attempted to place agent on top of wall or " "charger"
+                    )
             self.agent_pos = deepcopy(self.agent_start_pos)
         else:
             # No positions were given. We place agents randomly.
-            warn("No initial agent positions given. Randomly placing agents "
-                 "on the grid.")
+            warn(
+                "No initial agent positions given. Randomly placing agents "
+                "on the grid."
+            )
             for _ in range(self.n_agents):
                 # First get all empty positions
                 zeros = np.where(self.grid.cells == 0)
@@ -191,7 +199,6 @@ class Environment:
               'agent_charging', 'agent_pos']
         """
         return self.grid.cells, self.info
-
 
     def reset(self, **kwargs) -> [np.ndarray, dict, dict]:
         """Reset the environment to an initial state.
@@ -235,16 +242,19 @@ class Environment:
                 case "no_gui":
                     self.no_gui = v
                 case "target_fps":
-                    self.target_spf = 1. / v
+                    self.target_spf = 1.0 / v
                 case _:
-                    raise ValueError(f"{k} is not one of the possible "
-                                     f"keyword arguments.")
+                    raise ValueError(
+                        f"{k} is not one of the possible " f"keyword arguments."
+                    )
 
         if self.agent_start_pos is not None:
             if len(self.agent_start_pos) != self.n_agents:
-                raise ValueError(f"Number of agents {self.n_agents} does not "
-                                 f"agree with number of starting positions "
-                                 f"{len(self.agent_start_pos)}.")
+                raise ValueError(
+                    f"Number of agents {self.n_agents} does not "
+                    f"agree with number of starting positions "
+                    f"{len(self.agent_start_pos)}."
+                )
         self.agent_done = [False] * self.n_agents
         self.grid = Grid.load_grid_file(self.grid_fp)
         self._initialize_agent_pos()
@@ -307,9 +317,11 @@ class Environment:
                 else:
                     self.world_stats["total_failed_moves"] += 1
             case _:
-                raise ValueError(f"Grid is badly formed. It has a value of "
-                                 f"{self.grid.cells[new_pos]} at position "
-                                 f"{new_pos}.")
+                raise ValueError(
+                    f"Grid is badly formed. It has a value of "
+                    f"{self.grid.cells[new_pos]} at position "
+                    f"{new_pos}."
+                )
 
     def step(self, actions: list[int]) -> [np.ndarray, float, bool, dict]:
         """This function makes the agent take a step on the grid.
@@ -345,23 +357,28 @@ class Environment:
                 # Otherwise, we render the current state only
                 paused_info = self._reset_info()
                 paused_info["agent_moved"] = [True] * self.n_agents
-                self.gui.render(self.grid.cells, self.agent_pos, paused_info,
-                                is_single_step)
+                self.gui.render(
+                    self.grid.cells, self.agent_pos, paused_info, is_single_step
+                )
 
         if not self.environment_ready:
-            raise ValueError("reset() has not been called yet. "
-                             "The environment still needs to be initialized.")
+            raise ValueError(
+                "reset() has not been called yet. "
+                "The environment still needs to be initialized."
+            )
         # Verify that the number of actions and the number of agents is the
         # same
         if len(actions) != self.n_agents:
-            raise ValueError(f"Number of actions provided is {len(actions)}, "
-                             f"but the number of agents is {self.n_agents}.")
+            raise ValueError(
+                f"Number of actions provided is {len(actions)}, "
+                f"but the number of agents is {self.n_agents}."
+            )
 
         self.info = self._reset_info()
 
         max_x = self.grid.n_cols - 1
         max_y = self.grid.n_rows - 1
-
+        # print(actions)
         for i, action in enumerate(actions):
             if self.agent_done[i]:
                 # The agent is already on the charger, so it is done.
@@ -370,28 +387,33 @@ class Environment:
             # Add stochasticity into the agent action
             val = random.random()
             if val > self.sigma:
+                # print("Environment action:", type(action))
                 actual_action = action
+                # print("Action taken", actual_action)
             else:
                 actual_action = random.randint(0, 4)
             match actual_action:
                 case 0:  # Move down
-                    new_pos = (self.agent_pos[i][0],
-                               min(max_y, self.agent_pos[i][1] + 1))
+                    new_pos = (
+                        self.agent_pos[i][0],
+                        min(max_y, self.agent_pos[i][1] + 1),
+                    )
                 case 1:  # Move up
-                    new_pos = (self.agent_pos[i][0],
-                               max(0, self.agent_pos[i][1] - 1))
+                    new_pos = (self.agent_pos[i][0], max(0, self.agent_pos[i][1] - 1))
                 case 2:  # Move left
-                    new_pos = (max(0, self.agent_pos[i][0] - 1),
-                               self.agent_pos[i][1])
+                    new_pos = (max(0, self.agent_pos[i][0] - 1), self.agent_pos[i][1])
                 case 3:  # Move right
-                    new_pos = (min(max_x, self.agent_pos[i][0] + 1),
-                               self.agent_pos[i][1])
+                    new_pos = (
+                        min(max_x, self.agent_pos[i][0] + 1),
+                        self.agent_pos[i][1],
+                    )
                 case 4:  # Stand still
-                    new_pos = (self.agent_pos[i][0],
-                               self.agent_pos[i][1])
+                    new_pos = (self.agent_pos[i][0], self.agent_pos[i][1])
                 case _:
-                    raise ValueError(f"Provided action {action} for agent {i} "
-                                     f"is not one of the possible actions.")
+                    raise ValueError(
+                        f"Provided action {action} for agent {i} "
+                        f"is not one of the possible actions."
+                    )
             self._move_agent(new_pos, i)
 
         # Update the grid with the new agent positions and calculate the reward
@@ -404,8 +426,7 @@ class Environment:
             time_to_wait = self.target_spf - (time() - start_time)
             if time_to_wait > 0:
                 sleep(time_to_wait)
-            self.gui.render(self.grid.cells, self.agent_pos, self.info,
-                            is_single_step)
+            self.gui.render(self.grid.cells, self.agent_pos, self.info, is_single_step)
 
         return self.grid.cells, reward, terminal_state, self.info
 
@@ -432,14 +453,41 @@ class Environment:
         return float(sum(info["dirt_cleaned"]))
 
     @staticmethod
-    def evaluate_agent(grid_fp: Path,
-                       agents: list[BaseAgent],
-                       max_steps: int,
-                       out_dir: Path,
-                       sigma: float = 0.,
-                       agent_start_pos: list[tuple[int, int]] = None,
-                       random_seed: int | float | str | bytes | bytearray = 0,
-                       show_images: bool = False):
+    def count_heuristic(grid: Grid, info: dict) -> float:
+        """Count the number of tiles cleand by the agent.
+
+        Args:
+            grid: The grid object.
+            info: The info dictionary returned by the environment.
+
+        Returns:
+            The number of tiles cleaned by the agent.
+        """
+        obs = grid.cells
+        dirt_cleaned = sum(info["dirt_cleaned"])
+        obstacle_penalty = sum(
+            obs[i][j]
+            for i in range(len(obs))
+            for j in range(len(obs[i]))
+            if obs[i][j] == 2
+        )
+        end_bonus = (
+            10 if info["agent_charging"] else 0
+        )  # bonus for reaching the end point
+        reward = dirt_cleaned - obstacle_penalty + end_bonus
+        return float(reward)
+
+    @staticmethod
+    def evaluate_agent(
+        grid_fp: Path,
+        agents: list[BaseAgent],
+        max_steps: int,
+        out_dir: Path,
+        sigma: float = 0.0,
+        agent_start_pos: list[tuple[int, int]] = None,
+        random_seed: int | float | str | bytes | bytearray = 0,
+        show_images: bool = False,
+    ):
         """Evaluates a single trained agent's performance.
 
         What this does is it creates a completely new environment from the
@@ -472,29 +520,31 @@ class Environment:
                 evaluation. If False, only saves the images.
         """
         if not out_dir.exists():
-            warn("Evaluation output directory does not exist. Creating the "
-                 "directory.")
+            warn(
+                "Evaluation output directory does not exist. Creating the " "directory."
+            )
             out_dir.mkdir(parents=True, exist_ok=True)
-        env = Environment(grid_fp=grid_fp,
-                          no_gui=True,
-                          n_agents=len(agents),
-                          sigma=sigma,
-                          agent_start_pos=agent_start_pos,
-                          target_fps=-1,
-                          random_seed=random_seed)
+        env = Environment(
+            grid_fp=grid_fp,
+            no_gui=True,
+            n_agents=len(agents),
+            sigma=sigma,
+            agent_start_pos=agent_start_pos,
+            target_fps=-1,
+            random_seed=random_seed,
+        )
         obs, info = env.get_observation()
 
         initial_grid = np.copy(obs)
 
         # Set initial positions for the agent
-        agent_paths = [[pos] for pos in info['agent_pos']]
+        agent_paths = [[pos] for pos in info["agent_pos"]]
 
-        for _ in trange(max_steps,
-                        desc=f"Evaluating agent"
-                             f"{'s' if len(agents) > 1 else ''}"):
+        for _ in trange(
+            max_steps, desc=f"Evaluating agent" f"{'s' if len(agents) > 1 else ''}"
+        ):
             # Get the agent actions
-            actions = [agent.take_action(obs, info)
-                       for agent in agents]
+            actions = [agent.take_action(obs, info)[2] for agent in agents]
             # Take a step in the environment
             obs, _, terminated, info = env.step(actions)
 
@@ -531,7 +581,7 @@ class Environment:
                 img.show(f"Agent {i} Path Frequency")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # This is sample code to test a single grid.
     base_grid_fp = Path("../grid_configs/testroom.grd")
     envi = Environment(base_grid_fp, False, 1, target_fps=5)
@@ -539,6 +589,7 @@ if __name__ == '__main__':
 
     # Load the random agent
     from agents.random_agent import RandomAgent
+
     test_agent = RandomAgent(agent_number=0)
 
     # Take 1000 steps with the GUI
