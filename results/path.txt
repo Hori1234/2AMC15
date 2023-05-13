@@ -99,3 +99,205 @@ Action: UP Action Index: 0 Q-Table: [1.54066328 1.45907469 1.37602742 0.09151354
 Action: DOWN Action Index: 1 Q-Table: [1.15098981 1.83926609 1.22082412 1.23694171] X: 8 Y: 11
 Action: UP Action Index: 0 Q-Table: [1.58323828 1.45907469 1.37602742 0.09151354] X: 8 Y: 10
 Action: LEFT Action Index: 3 Q-Table: [2.2569859  3.9556319  2.19399221 4.57749816] X: 5 Y: 10
+Action: UP Action Index: 0 Q-Table: [0.05151788 0.         0.01671063 0.02452401] X: 5 Y: 10
+Action: UP Action Index: 0 Q-Table: [0.025543 0.       0.       0.      ] X: 5 Y: 11
+Action: RIGHT Action Index: 2 Q-Table: [0.         0.         0.01958034 0.01652093] X: 5 Y: 12
+Action: UP Action Index: 0 Q-Table: [0.12826453 0.02525768 0.05894967 0.040702  ] X: 4 Y: 12
+Action: UP Action Index: 0 Q-Table: [0.19747854 0.10978612 0.05487103 0.08949854] X: 4 Y: 13
+Action: UP Action Index: 0 Q-Table: [0.22656843 0.1059856  0.12801725 0.11669849] X: 4 Y: 14
+Action: UP Action Index: 0 Q-Table: [0.19490577 0.         0.09925613 0.07944166] X: 4 Y: 15
+Action: UP Action Index: 0 Q-Table: [0.21995834 0.         0.11271713 0.10469735] X: 4 Y: 15
+Action: UP Action Index: 0 Q-Table: [0.21995834 0.         0.13057916 0.10469735] X: 4 Y: 15
+Action: UP Action Index: 0 Q-Table: [0.24629615 0.         0.13057916 0.10469735] X: 4 Y: 15
+Action: UP Action Index: 0 Q-Table: [0.28439523 0.         0.14486878 0.10469735] X: 4 Y: 15
+Action: UP Action Index: 0 Q-Table: [0.3148745  0.         0.30455374 0.13792585] X: 4 Y: 15
+Action: RIGHT Action Index: 2 Q-Table: [0.41705001 0.         0.52000483 0.26397887] X: 4 Y: 15
+Action: RIGHT Action Index: 2 Q-Table: [0.29943527 0.34985534 0.43972451 0.30519368] X: 3 Y: 15
+Action: RIGHT Action Index: 2 Q-Table: [0.25003326 0.33524343 0.37299203 0.346396  ] X: 2 Y: 15
+Action: UP Action Index: 0 Q-Table: [0.53317298 0.26337285 0.32478645 0.        ] X: 1 Y: 15
+Action: UP Action Index: 0 Q-Table: [0.57953421 0.17903949 0.36416754 0.        ] X: 1 Y: 16
+Action: UP Action Index: 0 Q-Table: [0.50823905 0.39153292 0.35585487 0.        ] X: 1 Y: 17
+Action: RIGHT Action Index: 2 Q-Table: [0.48441422 0.4027296  0.57194906 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [0.51085847 0.47555994 0.66834162 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [0.59656262 0.62789295 0.8149637  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [0.63948249 0.64881078 0.9082388  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [0.73746152 0.81093405 1.23527047 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [0.78772689 0.83508085 1.36942853 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [0.82876699 0.95204053 1.36942853 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.02343227 1.17196346 1.53529612 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.02343227 1.19550226 1.53529612 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.10697406 1.23539274 1.60631384 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.10697406 1.25703596 1.64255496 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.10697406 1.25703596 1.67154786 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.14881582 1.25703596 1.71329763 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.33573071 1.27911973 1.71329763 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.39994036 1.27911973 1.71329763 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.5497383  1.27911973 1.80292966 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.65241934 1.31195945 1.80292966 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.65241934 1.34465179 1.82716588 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.68288471 1.38232053 1.84655485 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.71136319 1.41245552 1.84655485 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.71136319 1.46400476 1.89455499 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.73414598 1.57448128 1.96529984 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.84455299 1.69382302 2.11365973 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.84455299 1.71469869 2.11365973 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.84455299 1.71469869 2.13210085 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.92055103 1.73139923 2.13210085 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.95600456 1.76296346 2.14685374 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.95600456 1.78279716 2.20289676 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.95600456 1.80640288 2.2328499  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [1.95600456 1.80640288 2.30656527 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.23352535 1.94817451 2.4851032  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.2682139  1.97627433 2.51440325 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.46570289 2.11866509 2.68682682 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.50369055 2.2156102  2.78526528 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.54312691 2.33990251 2.81568481 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.58376558 2.36168425 2.81568481 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.58376558 2.38133462 2.84142672 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.67993459 2.40039356 2.85151139 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.72504374 2.41068104 2.86241957 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.72504374 2.41891101 2.86241957 0.        ] X: 1 Y: 18
+Action: UP Action Index: 0 Q-Table: [2.8873833  2.42549499 2.8824928  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.8873833  2.43454424 2.90294951 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.90662713 2.43454424 2.93240717 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.95427097 2.48234362 2.96676306 0.        ] X: 1 Y: 18
+Action: UP Action Index: 0 Q-Table: [2.99474626 2.54992116 2.98311349 0.        ] X: 1 Y: 18
+Action: UP Action Index: 0 Q-Table: [2.99474626 2.55425701 2.98731308 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.99991848 2.56050063 3.00168144 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.99991848 2.56369344 3.01199408 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.99991848 2.5670086  3.03829628 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.99991848 2.5670086  3.05162242 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [2.99991848 2.5670086  3.07763505 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.02508926 2.5670086  3.07763505 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.05107987 2.56966074 3.08309344 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.06464805 2.576269   3.09833814 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.08418624 2.576269   3.1065861  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.10150915 2.576269   3.11318447 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.10150915 2.576269   3.12598194 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.10980995 2.576269   3.12598194 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.12941313 2.58869123 3.1349067  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.12941313 2.58869123 3.14204651 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.13634927 2.6004472  3.16020668 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.14858075 2.6004472  3.17511152 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.16977786 2.62973922 3.20762452 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.24055583 2.76006577 3.26713742 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.25157315 2.76006577 3.27593678 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.25157315 2.76006577 3.28297626 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.27602608 2.76006577 3.29073564 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.31863297 2.78506841 3.36370299 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.33515834 2.78506841 3.38498297 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.3827039  2.80780385 3.4113665  0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.4153252  2.8435367  3.43056633 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.42188434 2.85891743 3.43785682 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.44176167 2.90060973 3.44963431 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.45306362 2.93549956 3.48045737 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.46611651 2.95930241 3.48608872 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.46991697 2.95930241 3.48758814 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.46991697 2.96302889 3.48812127 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.46991697 2.96674825 3.49084545 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.4763091  2.97814986 3.49431758 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.48774809 2.98866906 3.49754837 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.48896747 2.98938747 3.49809732 0.        ] X: 1 Y: 18
+Action: RIGHT Action Index: 2 Q-Table: [3.49079579 2.99011406 3.49917676 0.        ] X: 1 Y: 18
+Action: LEFT Action Index: 3 Q-Table: [4.3282999  5.55818997 4.26876259 5.56913269] X: 5 Y: 10
+Action: UP Action Index: 0 Q-Table: [0.01671063 0.01671063 0.         0.        ] X: 5 Y: 10
+Action: LEFT Action Index: 3 Q-Table: [0.0303915  0.03756031 0.0445716  0.26874908] X: 5 Y: 11
+Action: UP Action Index: 0 Q-Table: [0.10159571 0.05128562 0.02060631 0.06525475] X: 6 Y: 11
+Action: UP Action Index: 0 Q-Table: [0.06696255 0.05382281 0.01699673 0.05320952] X: 6 Y: 12
+Action: UP Action Index: 0 Q-Table: [0.08378642 0.03949659 0.         0.03839908] X: 6 Y: 13
+Action: DOWN Action Index: 1 Q-Table: [0.0718074  0.27212877 0.11253107 0.04891627] X: 6 Y: 14
+Action: UP Action Index: 0 Q-Table: [0.18494432 0.09771457 0.         0.10851629] X: 6 Y: 13
+Action: DOWN Action Index: 1 Q-Table: [0.16651174 1.20115105 0.3767082  0.23316769] X: 6 Y: 14
+Action: DOWN Action Index: 1 Q-Table: [0.24310469 0.35672319 0.         0.14961726] X: 6 Y: 13
+Action: UP Action Index: 0 Q-Table: [0.33451122 0.17766093 0.22631526 0.21655135] X: 6 Y: 12
+Action: DOWN Action Index: 1 Q-Table: [0.24310469 0.77551482 0.         0.22040841] X: 6 Y: 13
+Action: DOWN Action Index: 1 Q-Table: [0.33451122 0.41276993 0.24987496 0.28379136] X: 6 Y: 12
+Action: LEFT Action Index: 3 Q-Table: [0.25373688 0.45344535 0.31613286 0.98345022] X: 6 Y: 11
+Action: LEFT Action Index: 3 Q-Table: [0.06443051 0.18799962 0.2043128  0.57960307] X: 7 Y: 11
+Action: LEFT Action Index: 3 Q-Table: [0.13410724 0.31990599 0.2357073  0.36533405] X: 8 Y: 11
+Action: LEFT Action Index: 3 Q-Table: [0.21390251 0.36662202 0.28353375 0.41458455] X: 8 Y: 11
+Action: LEFT Action Index: 3 Q-Table: [0.21390251 0.36662202 0.30334221 0.45398495] X: 8 Y: 11
+Action: LEFT Action Index: 3 Q-Table: [0.272045   0.41626518 0.32954886 0.45398495] X: 8 Y: 11
+Action: DOWN Action Index: 1 Q-Table: [0.272045   0.51022155 0.37880782 0.45398495] X: 8 Y: 11
+Action: DOWN Action Index: 1 Q-Table: [0.08519808 0.37832115 0.19531855 0.06699165] X: 8 Y: 10
+Action: LEFT Action Index: 3 Q-Table: [0.12685787 0.16121812 0.12539321 0.23539776] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.2029607  0.16121812 0.12539321 0.27014529] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.23788655 0.16121812 0.12539321 0.30301944] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.26709168 0.27616036 0.1981029  0.30301944] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.29045579 0.27616036 0.231294   0.30301944] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.30914707 0.27616036 0.231294   0.35452981] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.30914707 0.33495023 0.26576762 0.40784328] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.30914707 0.43908965 0.29334651 0.46354881] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.35423972 0.47611699 0.29334651 0.5542086 ] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.35423972 0.51439754 0.32402072 0.5542086 ] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.35423972 0.54502197 0.4094689  0.5542086 ] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.35423972 0.54502197 0.43114786 0.5542086 ] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.35423972 0.56952152 0.47355315 0.59108488] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.38363167 0.56952152 0.48863059 0.62058591] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.38363167 0.59604809 0.48863059 0.62058591] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.38363167 0.61726935 0.48863059 0.62058591] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.38363167 0.61726935 0.48863059 0.65739548] X: 8 Y: 9
+Action: DOWN Action Index: 1 Q-Table: [0.38363167 0.65780274 0.48863059 0.65739548] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.45549864 0.48137696 0.4037216  0.49406749] X: 8 Y: 8
+Action: DOWN Action Index: 1 Q-Table: [0.45549864 0.52519911 0.4037216  0.49406749] X: 8 Y: 8
+Action: UP Action Index: 0 Q-Table: [0.50461421 0.48403978 0.39956889 0.46700728] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.45549864 0.59771209 0.43263933 0.60685363] X: 8 Y: 8
+Action: DOWN Action Index: 1 Q-Table: [0.47692252 0.62437302 0.43263933 0.60685363] X: 8 Y: 8
+Action: DOWN Action Index: 1 Q-Table: [0.53016755 0.54801683 0.4754998  0.52099398] X: 8 Y: 7
+Action: UP Action Index: 0 Q-Table: [0.69753837 0.54140228 0.44365553 0.        ] X: 8 Y: 6
+Action: LEFT Action Index: 3 Q-Table: [0.53016755 0.57464146 0.49554169 0.57838481] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.57105612 0.57464146 0.51157519 0.57838481] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.57105612 0.57464146 0.51157519 0.6091033 ] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.60376697 0.60923499 0.51157519 0.65754382] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.60376697 0.63690981 0.55302528 0.75390377] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.60376697 0.63690981 0.56776309 0.75390377] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.67933296 0.63690981 0.56776309 0.75390377] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.78047911 0.74950939 0.64029262 0.85854753] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.92612958 0.77313684 0.71598562 0.95107221] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.92612958 0.800265   0.73939808 1.00185762] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.97791641 0.800265   0.73939808 1.00185762] X: 8 Y: 7
+Action: UP Action Index: 0 Q-Table: [1.05360764 0.800265   0.79195017 1.00185762] X: 8 Y: 7
+Action: LEFT Action Index: 3 Q-Table: [0.85158335 0.85012834 0.72895217 0.92761834] X: 8 Y: 8
+Action: UP Action Index: 0 Q-Table: [0.97499038 0.87374511 0.79581392 0.92761834] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [0.83759009 0.92344573 0.75631642 1.05574049] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.9074365  0.92344573 0.79093719 1.06926979] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.9074365  0.92344573 0.79093719 1.09519105] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.93615889 0.92344573 0.79093719 1.13286196] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.93615889 0.92344573 0.79093719 1.20814215] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.93615889 0.92344573 0.8307632  1.20814215] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [0.9576334  1.15379895 0.86262401 1.29285793] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.04263977 1.15379895 0.89674682 1.29285793] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.06737656 1.15379895 0.92404506 1.29285793] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.06737656 1.15379895 0.92404506 1.36284339] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.06737656 1.15379895 0.92404506 1.38772711] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.06737656 1.15379895 0.9571584  1.38772711] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.12351943 1.25088117 0.9571584  1.38772711] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.17786893 1.32854696 0.98364907 1.38772711] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.20537899 1.32854696 1.02107722 1.38772711] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.20537899 1.32854696 1.05679241 1.42340145] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.20537899 1.39067958 1.05679241 1.45194092] X: 8 Y: 9
+Action: DOWN Action Index: 1 Q-Table: [1.20537899 1.48015056 1.05679241 1.45194092] X: 8 Y: 9
+Action: UP Action Index: 0 Q-Table: [1.43617387 1.34545054 0.92668021 1.32246544] X: 8 Y: 8
+Action: DOWN Action Index: 1 Q-Table: [1.23631636 1.53861471 1.05679241 1.49454115] X: 8 Y: 9
+Action: UP Action Index: 0 Q-Table: [1.50738689 1.34545054 0.92668021 1.41690401] X: 8 Y: 8
+Action: DOWN Action Index: 1 Q-Table: [1.23631636 1.55873378 1.08536457 1.49454115] X: 8 Y: 9
+Action: LEFT Action Index: 3 Q-Table: [1.60485956 1.40516557 1.03107146 1.68208399] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.60485956 1.42639758 1.08427132 1.7203812 ] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.6330966  1.46218655 1.17879382 1.79354906] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.6833728  1.47537001 1.29234633 1.83001275] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.6833728  1.47537001 1.3420388  1.83001275] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.70552205 1.47537001 1.38179278 1.86202252] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.70552205 1.48963017 1.38179278 1.86202252] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.70552205 1.50252164 1.41956962 1.86202252] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.70552205 1.51402149 1.45560715 1.86202252] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.72324145 1.52635125 1.45560715 1.88763034] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.72324145 1.54168699 1.45560715 1.88763034] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.72324145 1.54168699 1.49364197 1.88763034] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.73741697 1.58480735 1.55849231 1.9464761 ] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.73741697 1.58480735 1.58956243 2.02844903] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.73741697 1.60000723 1.58956243 2.02844903] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.73741697 1.60000723 1.58956243 2.05001041] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.7586891  1.62189507 1.58956243 2.05001041] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.78932097 1.64004807 1.62027694 2.06725951] X: 8 Y: 8
+Action: LEFT Action Index: 3 Q-Table: [1.78932097 1.64004807 1.62027694 2.11557309] X: 8 Y: 8
+Action: DOWN Action Index: 1 Q-Table: [2.81208442 4.39868333 2.82986153 4.22998951] X: 5 Y: 10
