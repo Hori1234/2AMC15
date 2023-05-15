@@ -74,7 +74,7 @@ def main(
             sigma=sigma,
             target_fps=fps,
             random_seed=random_seed,
-            reward_fn=QSARSA_Agent.heuristic_distance_to_dirt,
+            reward_fn=QSARSA_Agent.heuristic_distance_to_dirt_with_trajectory,
         )
         obs, info = env.get_observation()
 
