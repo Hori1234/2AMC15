@@ -20,7 +20,7 @@ from agents.mc_agent import MCAgent
 from world.grid import Grid
 
 
-#from environment import reward_function
+# from environment import reward_function
 
 
 def parse_args():
@@ -59,11 +59,15 @@ def parse_args():
 
     return p.parse_args()
 
+
 def custom_reward_function(grid: Grid, info: dict) -> float:
     """
     Reward of taking each step: -1 (to encourage the agent to clean
     faster and in case of an action that takes the agent to an obstacle,
     the agent remains in the same tile but gets a penalty for wasting an action)
+
+    Reward of staying in the same tile: -5 (to encourage the agent to keep moving,
+    because staying in the same location is not helping anyone)
 
     Reward of cleaning each dirty tile (orange): +5 (you do not need to put too
     many dirty tiles in the grid, for instance in a 10x10 grid, 2-3 dirty tiles
@@ -78,6 +82,8 @@ def custom_reward_function(grid: Grid, info: dict) -> float:
     # dus bijv [0, 1, 0] en moet je dus niet altijd de 1e index hebben zoals ik dat nu wel heb gedaan
     if info["dirt_cleaned"][0] > 0:
         reward = 5
+    elif not info["agent_moved"][0]:
+        reward = -5
     elif info["agent_charging"][0]:
         if grid.sum_dirt() == 0:
             reward = 10
@@ -87,6 +93,7 @@ def custom_reward_function(grid: Grid, info: dict) -> float:
         reward = -1
 
     return reward
+
 
 def main(
     grid_paths: list[Path],
@@ -105,18 +112,18 @@ def main(
             grid,
             no_gui,
             n_agents=1,
-            #agent_start_pos=[(5, 10)],
+            # agent_start_pos=[(5, 10)],
             sigma=sigma,
             target_fps=fps,
             random_seed=random_seed,
-            reward_fn= custom_reward_function
+            reward_fn=custom_reward_function,
         )
         obs, info = env.get_observation()
 
         # Set up the agents from scratch for every grid
         # Add your agents here
         agents = [
-            #QLearn_Agent(0,obs),
+            # QLearn_Agent(0,obs),
             MCAgent(0, obs)
         ]
 
@@ -130,15 +137,17 @@ def main(
                 obs, reward, terminated, info = env.step([action])
 
                 # If the agent is terminated, we reset the env.
-                if terminated:
+                # for the 3 dirt env, also terminate if no drit left
+                # note that this extra statement has to be removed with new envs
+                if terminated or env.grid.sum_dirt() == 0:
                     obs, info, world_stats = env.reset()
-                    agent.dirt_found = [0,0,0]
+                    agent.dirt_found = [0, 0, 0]
 
                 agent.process_reward(obs, reward, info)
             obs, info, world_stats = env.reset()
             print(world_stats)
             Environment.evaluate_agent(
-                grid, [agent], 10, out, 0.2, agent_start_pos=[(7, 5)]
+                grid, [agent], 100, out, 0.2, agent_start_pos=[(7, 5)]
             )
 
 

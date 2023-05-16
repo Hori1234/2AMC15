@@ -11,7 +11,7 @@ class MCAgent(BaseAgent):
         # Variables to set (maybe as parameters in the constructor)
         self.max_len_episode = 30
         self.gamma = 0.5
-        self.epsilon = 0.3
+        self.epsilon = 0.4
 
         # Get the coordinates of the dirt
         self.dirts = [
