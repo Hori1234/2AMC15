@@ -91,12 +91,8 @@ We also provide a `grid_generator.py` file to generate random grids, found in `l
 Usage is:
 
 ```bash
-<<<<<<< HEAD
-$ python grid_generator.py
-=======
 $ cd level_editor
 $ python grid_generator.py
->>>>>>> 1d2d3ef2ed6d4e66078e30ad9918eee1daef8d40
 
 usage: grid_generator.py [-h] N_GRIDS N_ROOMS FILE_PREFIX
 

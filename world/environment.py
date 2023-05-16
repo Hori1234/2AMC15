@@ -553,34 +553,7 @@ class Environment:
 
 
 # Create custom reward function
-def custom_reward_function(grid: Grid, info: dict) -> float:
-    """
-    Reward of taking each step: -1 (to encourage the agent to clean
-    faster and in case of an action that takes the agent to an obstacle,
-    the agent remains in the same tile but gets a penalty for wasting an action)
 
-    Reward of cleaning each dirty tile (orange): +5 (you do not need to put too
-    many dirty tiles in the grid, for instance in a 10x10 grid, 2-3 dirty tiles
-    would be enough).
-
-    Reward of reaching the charging station after cleaning all the dirty tiles: +10
-    (if the agent reaches the charging station but there are still some dirty tiles
-    left, the reward would be -1, similar to a step reward)
-    """
-    # TODO: Als er meerdere agents tegelijk zijn dan gaat dit mis
-    # want dan zal dirt_cleaned een lijst zijn met de dirt_cleaned van alle agents
-    # dus bijv [0, 1, 0] en moet je dus niet altijd de 1e index hebben zoals ik dat nu wel heb gedaan
-    if info["dirt_cleaned"][0] > 0:
-        reward = 5
-    elif info["agent_charging"][0]:
-        if grid.sum_dirt() == 0:
-            reward = 10
-        else:
-            reward = -1
-    else:
-        reward = -1
-
-    return reward
 
 
 if __name__ == "__main__":
