@@ -20,6 +20,19 @@ class MCAgent(BaseAgent):
         # don't know our initial position yet.
         # self.reset_location = None
 
+        # Get the coordinates of the dirt
+        self.dirts = [
+            (x, y) for x, y in zip(np.where(obs == 3)[0], np.where(obs == 3)[1])
+        ]
+
+        # Initialize list to keep track of dirt we found
+        self.dirt_found = [0 for _ in range(len(self.dirts))]
+
+        # Decide the number of dimensions d needed for the state space
+        # Each dimension represents a combination of specific dirt tiles that
+        # are cleaned or not cleaned
+        self.maxD = 2 ** len(self.dirts)
+
         self.x_size, self.y_size = obs.shape
         self.A = [0, 1, 2, 3, 4]
 
@@ -29,9 +42,10 @@ class MCAgent(BaseAgent):
         # "n" = the number of times the state was visited
         self.Returns = [
             [
-                
-                [{"total": 0, "n": 0} for _ in range(len(self.A))]
-
+                [
+                    [{"total": 0, "n": 0} for _ in range(len(self.A))]
+                    for _ in range(self.maxD)
+                ]
                 for _ in range(self.y_size)
             ]
             for _ in range(self.x_size)
@@ -39,25 +53,38 @@ class MCAgent(BaseAgent):
 
         self.Q = [
             [
-                {
-                    0: np.random.rand(),
-                    1: np.random.rand(),
-                    2: np.random.rand(),
-                    3: np.random.rand(),
-                    4: np.random.rand(),
-                }
+                [
+                    {
+                        0: np.random.rand(),
+                        1: np.random.rand(),
+                        2: np.random.rand(),
+                        3: np.random.rand(),
+                        4: np.random.rand(),
+                    }
+                    for _ in range(self.maxD)
+                ]
                 for _ in range(self.y_size)
             ]
             for _ in range(self.x_size)
         ]
 
-        self.policy = np.zeros((self.x_size, self.y_size))
+        self.policy = np.zeros((self.x_size, self.y_size, self.maxD))
         # create initial policy
         self.update_policy()
 
         # to keep track of (s,a,r) of each step in episode
         self.episode = deque()
         self.episode_rewards = deque()
+
+    def list_to_int(self, d_list):
+        """
+        Convert a list of zeroes and ones to a binary number
+        e.g. [0,1,0,1] -> 5
+        """
+        d_list = [str(i) for i in d_list]
+        d_string = "".join(d_list)
+        d_int = int(d_string, 2)
+        return d_int
 
     def check_if_location_reset(self, reward, agent_pos):
         pass
@@ -108,7 +135,7 @@ class MCAgent(BaseAgent):
         # cell to a dict which keeps track of the discounted reward
         newQ = [
             [
-                [False for _ in range(len(self.A))]
+                [[False for _ in range(len(self.A))] for _ in range(self.maxD)]
                 for _ in range(self.y_size)
             ]
             for _ in range(self.x_size)
@@ -117,13 +144,13 @@ class MCAgent(BaseAgent):
         # create deque that keeps track of the state action pairs seen in the episode
         state_action_pairs_seen = deque()
 
-        for index, ((currentX, currentY), currentA) in enumerate(
+        for index, ((currentX, currentY, currentD), currentA) in enumerate(
             self.episode
         ):
-            currentX, currentY, currentA = (
+            currentX, currentY, currentD, currentA = (
                 int(currentX),
                 int(currentY),
-
+                int(currentD),
                 int(currentA),
             )
             # This loop is designed in such a way that we have to loop over
@@ -134,8 +161,8 @@ class MCAgent(BaseAgent):
             currentReward = self.episode_rewards[index]
 
             # Update all discounted rewards for previously spotted state action pairs
-            for prevX, prevY, prevA in state_action_pairs_seen:
-                discounted_reward_dict = newQ[prevX][prevY][prevA]
+            for prevX, prevY, prevD, prevA in state_action_pairs_seen:
+                discounted_reward_dict = newQ[prevX][prevY][prevD][prevA]
 
                 new_gamma_exponent = discounted_reward_dict["gamma_exponent"] + 1
                 discounted_reward_dict["gamma_exponent"] = new_gamma_exponent
@@ -146,23 +173,23 @@ class MCAgent(BaseAgent):
 
             # Create dict for this state action pair if is the first time we are seeing it
             # in this episode
-            if not newQ[currentX][currentY][
+            if not newQ[currentX][currentY][currentD][
                 currentA
             ]:  # means that this is the first time we are seeing this state action pair in this episode
-                newQ[currentX][currentY][currentA] = {
+                newQ[currentX][currentY][currentD][currentA] = {
                     "discounted_reward": currentReward * self.gamma,
                     "gamma_exponent": 1,
                 }
-                state_action_pairs_seen.append((currentX, currentY, currentA))
+                state_action_pairs_seen.append((currentX, currentY, currentD, currentA))
 
         # update Returns: total, n
         # and update Q[x][y][a] with the new AVG(!) discounted reward
-        for x, y, a in state_action_pairs_seen:
-            self.Returns[x][y][a]["total"] += newQ[x][y][a]["discounted_reward"]
-            self.Returns[x][y][a]["n"] += 1
+        for x, y, d, a in state_action_pairs_seen:
+            self.Returns[x][y][d][a]["total"] += newQ[x][y][d][a]["discounted_reward"]
+            self.Returns[x][y][d][a]["n"] += 1
 
-            self.Q[x][y][a] = (
-                self.Returns[x][y][a]["total"] / self.Returns[x][y][a]["n"]
+            self.Q[x][y][d][a] = (
+                self.Returns[x][y][d][a]["total"] / self.Returns[x][y][d][a]["n"]
             )
 
     def update_policy(self, optimal=False):
@@ -180,29 +207,30 @@ class MCAgent(BaseAgent):
         # loop over all x,y in self.Q
         for x in range(self.x_size):
             for y in range(self.y_size):
-                Q_values = self.Q[x][y]
-                # find the key that corresponds to the max value
-                max_key = max(Q_values, key=Q_values.get)
+                for d in range(self.maxD):
+                    Q_values = self.Q[x][y][d]
+                    # find the key that corresponds to the max value
+                    max_key = max(Q_values, key=Q_values.get)
 
-                # If training is over, we want to take the optimal policy
-                if optimal:
-                    action = max_key
-                else:
-                    action_probs = len(self.A) * [self.epsilon / len(self.A)]
+                    # If training is over, we want to take the optimal policy
+                    if optimal:
+                        action = max_key
+                    else:
+                        action_probs = len(self.A) * [self.epsilon / len(self.A)]
 
-                    action_probs[max_key] = (
-                        1 - self.epsilon + self.epsilon / len(self.A)
-                    )
+                        action_probs[max_key] = (
+                            1 - self.epsilon + self.epsilon / len(self.A)
+                        )
 
-                    action = np.random.choice(a=5, p=action_probs)
+                        action = np.random.choice(a=5, p=action_probs)
 
-                # set the policy at x,y,d to the chosen action
-                self.policy[x, y] = action
+                    # set the policy at x,y,d to the chosen action
+                    self.policy[x, y, d] = action
 
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
         """
         Return the action that should be taken by the agent, based on the current
-        policy and state (= (x,y)).
+        policy and state (= (x,y,d)).
         """
         # Get the x,y values of the state
         x, y = info["agent_pos"][self.agent_number]
@@ -211,13 +239,36 @@ class MCAgent(BaseAgent):
         # If this is the initial location, set this as place to reset to
         # self.reset_location = (x, y)
 
+        # Get d value of the state
+        d = self.check_depth(x, y)
 
         # For current state, get the action based on the current policy
-        next_action = self.policy[x][y]
+        next_action = self.policy[x][y][d]
 
         # Log the state action pair in self.episode
-        self.episode.append(((x, y), next_action))
+        self.episode.append(((x, y, d), next_action))
 
         # return the action we take
         return next_action
 
+    def check_depth(self, x, y):
+        """
+        Function that returns what value of d should be used in the state.
+
+        First, it is checked if the agent is currently standing on a spot which
+        was originally covered with dirt. If this is the case, this must be logged
+        in self.dirt_found. Note that this might happen multiple times for the same
+        tile, as the agent might move over it multiple times. This is not a problem,
+        as we only care about whether the tile was visited at least once.
+
+        Then, we check what tiles remain dirty to decide the appropriate value of d.
+        """
+
+        if (x, y) in self.dirts:
+            index = self.dirts.index((x, y))
+            # set the corresponding entry in self.dirt_found to 1
+            self.dirt_found[index] = 1
+
+        d = self.list_to_int(self.dirt_found)
+
+        return d
