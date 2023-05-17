@@ -145,6 +145,7 @@ def main(
 
                 agent.process_reward(obs, reward, info)
             obs, info, world_stats = env.reset()
+            agent.update_policy(optimal=True)
             print(world_stats)
             Environment.evaluate_agent(
                 grid, [agent], 100, out, 0.2, agent_start_pos=[(7, 5)]

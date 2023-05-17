@@ -12,6 +12,13 @@ class MCAgent(BaseAgent):
         self.max_len_episode = 30
         self.gamma = 0.5
         self.epsilon = 0.4
+        self.max_steps_without_cleaning = 20
+
+        # Keeps track of our initial position, and last places we found dirt.
+        # If we have bene moving for too long without success, we'll reset to
+        # this location. Initial value will be set in teke_action because we
+        # don't know our initial position yet.
+        # self.reset_location = None
 
         # Get the coordinates of the dirt
         self.dirts = [
@@ -79,6 +86,9 @@ class MCAgent(BaseAgent):
         d_int = int(d_string, 2)
         return d_int
 
+    def check_if_location_reset(self, reward, agent_pos):
+        pass
+
     def process_reward(self, obs: np.ndarray, reward: float, info):
         """
         Check if terminated (we assume that happens if charging station reached) Or maximum number of steps reached in episode.
@@ -87,11 +97,23 @@ class MCAgent(BaseAgent):
         # Add reward obtained to the list with rewards
         self.episode_rewards.append(reward)
 
+        # # If we find dirt somewhere, this will be the starting position
+        # # of the next world (= (x,y) grid with current d value)
+        # if reward >= 5:
+        #     x, y = info["agent_pos"][self.agent_number]
+        #     self.reset_location = (int(x), int(y))
+
         # Check if terminated (=end of episode or charging station reached with all dirt cleaned)
         if reward == 10 or len(self.episode) >= self.max_len_episode:
             # update Q and policy
             self.update_Q()
             self.update_policy()
+
+            # If we've not found anything in the entire episode, go back to last place where
+            # dirt was found
+            # need_to_reset_location = all(reward < 5 for reward in self.episode_rewards)
+
+            # if need_to_reset_location:
 
             # reset episode
             self.reset_episode()
@@ -170,13 +192,17 @@ class MCAgent(BaseAgent):
                 self.Returns[x][y][d][a]["total"] / self.Returns[x][y][d][a]["n"]
             )
 
-    def update_policy(self):
+    def update_policy(self, optimal=False):
         """
         Update the policy for each state value.
 
         This is done by looking at the Q values for each state and choosing between
         the action with the highest Q value with probability 1-epsilon + epsilon/|A|
         and a random different action with probability epsilon/|A|.
+
+        Args:
+            optimal (bool, optional): If True, we take the optimal policy. If false,
+                we take the epsilon greedy policy. Defaults to False.
         """
         # loop over all x,y in self.Q
         for x in range(self.x_size):
@@ -186,15 +212,19 @@ class MCAgent(BaseAgent):
                     # find the key that corresponds to the max value
                     max_key = max(Q_values, key=Q_values.get)
 
-                    action_probs = len(self.A) * [self.epsilon / len(self.A)]
+                    # If training is over, we want to take the optimal policy
+                    if optimal:
+                        action = max_key
+                    else:
+                        action_probs = len(self.A) * [self.epsilon / len(self.A)]
 
-                    action_probs[max_key] = (
-                        1 - self.epsilon + self.epsilon / len(self.A)
-                    )
+                        action_probs[max_key] = (
+                            1 - self.epsilon + self.epsilon / len(self.A)
+                        )
 
-                    action = np.random.choice(a=5, p=action_probs)
+                        action = np.random.choice(a=5, p=action_probs)
 
-                    # set the policy at x,y,d to the mchosen action
+                    # set the policy at x,y,d to the chosen action
                     self.policy[x, y, d] = action
 
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
@@ -205,6 +235,9 @@ class MCAgent(BaseAgent):
         # Get the x,y values of the state
         x, y = info["agent_pos"][self.agent_number]
         x, y = int(x), int(y)
+
+        # If this is the initial location, set this as place to reset to
+        # self.reset_location = (x, y)
 
         # Get d value of the state
         d = self.check_depth(x, y)
