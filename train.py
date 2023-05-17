@@ -74,13 +74,13 @@ def main(
             sigma=sigma,
             target_fps=fps,
             random_seed=random_seed,
-            reward_fn=QSARSA_Agent.heuristic_distance_to_dirt,
+            reward_fn=QSARSA_Agent.heuristic,
         )
         obs, info = env.get_observation()
 
         # Set up the agents from scratch for every grid
         # Add your agents here
-        agents = [QSARSA_Agent(0, obs, use_sarsa=True, use_double_q=True)]
+        agents = [QSARSA_Agent(0, obs, use_sarsa=False, use_double_q=True)]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
@@ -106,7 +106,7 @@ def main(
             obs, info, world_stats = env.reset()
             print(world_stats)
 
-            Environment.evaluate_agent(grid, [agent], 1000, out, 0.2)
+            Environment.evaluate_agent(grid, [agent], iters, out, 0.2)
 
 
 if __name__ == "__main__":

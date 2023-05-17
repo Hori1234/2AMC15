@@ -39,7 +39,7 @@ class QSARSA_Agent(BaseAgent):
         # Initialize observation
         self.observation = obs
         # Initialize actions
-        self.actions = {"UP": 0, "DOWN": 1, "RIGHT": 2, "LEFT": 3, "STUCK": 4}
+        self.actions = {"UP": 1, "DOWN": 0, "RIGHT": 3, "LEFT": 2, "STUCK": 4}
         self.move_list = []
         # Initialize show_info and train_range
         self.show_info = show_info
@@ -64,32 +64,6 @@ class QSARSA_Agent(BaseAgent):
             (len(self.actions), observation.shape[0], observation.shape[1])
         ).astype(float)
 
-    # generate_q_table_rewards
-    def generate_q_table_rewards(self, observation: np.ndarray):
-        """
-        Generates a Q-table with all zeros.
-        And with rewards for obstacles, dirt, and home
-
-        Args:
-            shape: The shape of the Q-table.
-        """
-        # initialize q_table with all zeros
-        q_table = np.zeros(observation.shape).astype(float)
-        # set q_table values for obstacles, dirt, and home
-        for i in range(observation.shape[0]):
-            for j in range(observation.shape[1]):
-                # set q_table values for obstacles, dirt, and home
-                if observation[i][j] == 2 or observation[i][j] == 1:
-                    q_table[i][j] = 1
-                elif observation[i][j] == 3:
-                    q_table[i][j] = 1
-                elif observation[i][j] == 4:
-                    q_table[i][j] = 1
-                elif observation[i][j] == 0:
-                    q_table[i][j] = 5
-
-        return q_table
-
     # heuristic_distance_to_dirt
     def heuristic_distance_to_dirt(grid: Grid, info: None | dict) -> float:
         """Count the number of tiles cleand by the agent.
@@ -108,20 +82,6 @@ class QSARSA_Agent(BaseAgent):
             x2, y2 = dirt_pos
             distance = abs(x1 - x2) + abs(y1 - y2)
             return distance
-        
-        def is_room_exit(state, empty_cells, walls):
-            x, y = state
-            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
-                next_x, next_y = x + dx, y + dy
-                if (next_x, next_y) not in empty_cells or (next_x, next_y) in walls:
-                    return True
-
-            return False
-        
-        def trajectory_calculation(state, empty_cells, walls):
-            trajectory = []
-            # will return the trajectory set of the agent till it reaches the dirt
-            return trajectory
 
         # Calculate the distance to the nearest dirt tile, avoiding obstacles
         current_state = info["agent_pos"][0]
@@ -150,13 +110,15 @@ class QSARSA_Agent(BaseAgent):
             min_distance = min(min_distance, distance)
 
         # Adjust the distance by the number of obstacles along the path
-        path_obstacles = set(walls_positions) - set()- set(dirt_positions)
+        path_obstacles = set(walls_positions) - set() - set(dirt_positions)
         num_obstacles = len(path_obstacles)
         adjusted_distance = min_distance + num_obstacles
 
         return 1.0 / adjusted_distance if adjusted_distance != float("inf") else 0.0
 
-    def heuristic_distance_to_dirt_with_trajectory(grid: Grid, info: None | dict) -> float:
+    def heuristic_distance_to_dirt_with_trajectory(
+        grid: Grid, info: None | dict
+    ) -> float:
         """Count the number of tiles cleaned by the agent.
 
         Args:
@@ -169,23 +131,25 @@ class QSARSA_Agent(BaseAgent):
 
         # Calculate the distance to the nearest dirt tile, avoiding obstacles
         obs = grid.cells
-        
+
         """ Here is the explanation for the code above:
         1. We use Manhattan distance to calculate the distance between two points.
         2. The distance is the sum of the absolute values of the differences of the coordinates.
         """
+
         def calculate_distance(current_state, dirt_pos):
             x1, y1 = current_state
             x2, y2 = dirt_pos
             distance = abs(x1 - x2) + abs(y1 - y2)
             return distance
-        
+
         """ Here is the explanation for the code above:
         1. The "walls" variable is a set of tuples, where each tuple is the (x, y) coordinate of a wall in the maze.
         2. The "empty_cells" variable is also a set of tuples, where each tuple is the (x, y) coordinate of an empty cell in the maze.
         3. The "state" variable is a tuple, containing the (x, y) coordinate of the current state.
         4. The "is_room_exit" function should return True if the current state is next to a wall or is not next to an empty cell. Otherwise, it should return False. 
         """
+
         def is_room_exit(state, empty_cells, walls):
             x, y = state
             for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
@@ -194,12 +158,13 @@ class QSARSA_Agent(BaseAgent):
                     return True
 
             return False
-        
+
         """ The code above does the following:
         1. Find all the room exit tiles.
         2. Calculate the distances from the current state to each room exit.
         3. Find the closest room exit and add it to the trajectory. 
         """
+
         def trajectory_calculation(state, empty_cells, walls):
             trajectory = []
             room_exits = []
@@ -213,7 +178,9 @@ class QSARSA_Agent(BaseAgent):
                 return trajectory
 
             # Calculate the distances from the current state to each room exit
-            distances_to_exits = [calculate_distance(state, exit_tile) for exit_tile in room_exits]
+            distances_to_exits = [
+                calculate_distance(state, exit_tile) for exit_tile in room_exits
+            ]
 
             # Find the closest room exit and add it to the trajectory
             closest_exit_index = np.argmin(distances_to_exits)
@@ -254,7 +221,9 @@ class QSARSA_Agent(BaseAgent):
         adjusted_distance = min_distance + num_obstacles
 
         # Calculate the trajectory to the dirt position including the room exit
-        trajectory = trajectory_calculation(current_state, empty_positions, walls_positions)
+        trajectory = trajectory_calculation(
+            current_state, empty_positions, walls_positions
+        )
 
         # Calculate the balance reward based on trajectory
         balance_reward = 0.0
@@ -267,6 +236,16 @@ class QSARSA_Agent(BaseAgent):
 
         total_reward = 1.0 / adjusted_distance + balance_reward
         return total_reward if total_reward != float("inf") else 0.0
+
+    def heuristic(grid: Grid, info: None | dict) -> float:
+        if info["agent_moved"][0] == False:
+            return float(-100)
+        elif sum(info["dirt_cleaned"]) < 1:
+            return float(-1)
+        elif info["agent_charging"][0] == True:
+            return float(20)
+        else:
+            return float(5)
 
     def process_reward(
         self,
@@ -337,22 +316,20 @@ class QSARSA_Agent(BaseAgent):
         self.q_table[action_idx][x][y] = new_value
 
     def update_DQ(
-        self, x: int, y: int, action_idx: int, reward: int, next_x: int, next_y: int
+        self, x: int, y: int, action_idx: int, reward: float, next_x: int, next_y: int
     ) -> None:
-        if self.use_double_q == True:
-            if np.random.rand() < 0.5:
-                q_table = self.q_tableA
-            else:
-                q_table = self.q_tableB
-            next_max = np.max(q_table[:, next_x, next_y])
+        if np.random.rand() < 0.5:
+            q_table = self.q_tableA
         else:
-            next_max = np.max(self.q_tableA[:, next_x, next_y])
+            q_table = self.q_tableB
+
+        next_max = np.max(q_table[:, next_x, next_y])
         # Get the maximum Q-value for the next state
         if self.use_sarsa:
             # Get the next action
             next_action = self.get_next_best_move(next_x, next_y)
             # Use the next action to calculate the next Q-value using SARSA
-            current_value = self.q_tableA[next_action, next_x, next_y]
+            current_value = q_table[next_action, next_x, next_y]
         else:
             # Use the best action to calculate the next Q-value usign Q-Learning
             current_value = (
@@ -363,11 +340,10 @@ class QSARSA_Agent(BaseAgent):
         new_value = (1 - self.alpha) * current_value + self.alpha * (
             reward + self.gamma * next_max
         )
-        self.q_table[action_idx][x][y] = new_value
+        q_table[action_idx][x][y] = new_value
 
     def get_next_move(self, x: int, y: int) -> tuple[int, int, int]:
-        next_x = x
-        next_y = y
+        next_x, next_y = x, y
         # Choose a random action with probability epsilon
         if np.random.uniform(0, 1) < self.epsilon:
             # Choose a random action with probability epsilon
@@ -399,14 +375,6 @@ class QSARSA_Agent(BaseAgent):
             action_idx = np.argmax(q_values)
         else:
             action_idx = np.argmax(self.q_table[:, x, y])
-        # print(action_idx)
-        # for k,v in self.actions.items():
-        #     if v == action_idx:
-        #         f = open("./results/path.txt", "a")
-        #         #print("Action: ", k, "Action Index: ", action_idx, "Q-Table: ", self.q_table[:,x,y], "X: ", x, "Y: ", y)
-        #         f.write("Action: " + str(k) + " Action Index: " + str(action_idx) + " Q-Table: " + str(self.q_table[:,x,y]) + " X: " + str(x) + " Y: " + str(y))
-        #         f.write("\n")
-        #         f.close()
         return action_idx
 
     def get_current_position(self, info: None | dict) -> float:
