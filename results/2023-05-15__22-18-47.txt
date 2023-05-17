@@ -1,0 +1,6 @@
+total_dirt_cleaned: 8
+total_steps: 80
+total_agent_moves: 78
+total_agents_at_charger: 1
+total_failed_moves: 1
+dirt_remaining: 0

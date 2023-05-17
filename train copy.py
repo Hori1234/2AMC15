@@ -52,8 +52,10 @@ def parse_args():
     p.add_argument("--fps", type=int, default=30,
                    help="Frames per second to render at. Only used if "
                         "no_gui is not set.")
-    p.add_argument("--iter", type=int, default=100000,
+    p.add_argument("--iter", type=int, default=300,
                    help="Number of iterations to go through.")
+    p.add_argument("--episodes", type=int, default=100,
+                   help="Number of episodes to go through.")
     p.add_argument("--random_seed", type=int, default=0,
                    help="Random seed value for the environment.")
     p.add_argument("--out", type=Path, default=Path("results/"),
@@ -81,64 +83,65 @@ def reward_function(grid: Grid, info: dict) -> float:
         A single floating point value representing the reward for a given
         action.
     """
-    if info['agent_charging'][0] == True:
-        return float(10)
-    elif info['agent_moved'][0] == False:
+    if info['agent_moved'][0] == False:
         return float(-100)
     elif sum(info["dirt_cleaned"]) < 1:
         return float(-1)
+    elif info['agent_charging'][0] == True:
+        return float(20)
     else:
-        return float(3)
+        return float(5)
 
 
-def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
+def main(grid_paths: list[Path], no_gui: bool, iters: int, episodes: int, fps: int,
          sigma: float, out: Path, random_seed: int):
     """Main loop of the program."""
 
     for grid in grid_paths:
         # Set up the environment and reset it to its initial state
-        env = Environment(grid, no_gui, n_agents=1,
+        env = Environment(grid, no_gui, n_agents=1, agent_start_pos=[(10, 8)],
                           sigma=sigma, target_fps=fps, random_seed=random_seed, reward_fn=reward_function)
         obs, info = env.get_observation()
 
         # Set up the agents from scratch for every grid
         # Add your agents here
         agents = [
-            QAgent(0, learning_rate=1, discount_rate=0.5,
-                   epsilon_decay=0.001),
+            # NullAgent(0),
+            #   GreedyAgent(0),
+            #   RandomAgent(0),
+            QAgent(0, learning_rate=0.4, discount_rate=0.8),
         ]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
-            episode = 1
-            print(f'Episode: {episode}')
-            for _ in trange(iters):
-                # Agent takes an action based on the latest observation and info
-                action = agent.take_action(obs, info)
-                old_state = info["agent_pos"][agent.agent_number]
-                # The action is performed in the environment
-                obs, reward, terminated, info = env.step([action])
-                new_state = info['agent_pos'][agent.agent_number]
+            eps_thres = 1
+            for episode in trange(episodes):
+                print(f'Episode: {episode}')
+                print(f'Epsilon Threshold: {eps_thres}')
+                for _ in trange(iters):
+                    # Agent takes an action based on the latest observation and info
+                    action = agent.take_action(obs, info, eps_thres)
+                    old_state = info["agent_pos"][agent.agent_number]
+                    # The action is performed in the environment
+                    obs, reward, terminated, info = env.step([action])
+                    new_state = info['agent_pos'][agent.agent_number]
 
-                agent.process_reward(
-                    obs, info, reward, old_state, new_state, action)
+                    agent.process_reward(
+                        obs, info, reward, old_state, new_state, action)
+                    # If the agent is terminated, we reset the env.
+                    if terminated:
+                        break
+                        # obs, info, world_stats = env.reset()
+                        # eps_thres = max(0, eps_thres - 0.01)
 
-                # If the agent is terminated, we reset the env.
-                if terminated:
-                    obs, info, world_stats = env.reset()
-                    episode += 1
-                    print(f'Episode: {episode}')
+                obs, info, world_stats = env.reset()
+                print(world_stats)
+                eps_thres = max(0, eps_thres - 0.01)
 
-                if agent.eps == 0:
-                    break
-
-            obs, info, world_stats = env.reset()
-            print(world_stats)
-
-            Environment.evaluate_agent(grid, [agent], 1000, out, 0.2)
+            Environment.evaluate_agent(grid, [agent], iters, out, 0.2)
 
 
 if __name__ == '__main__':
     args = parse_args()
-    main(args.GRID, args.no_gui, args.iter, args.fps, args.sigma, args.out,
+    main(args.GRID, args.no_gui, args.iter, args.episodes, args.fps, args.sigma, args.out,
          args.random_seed)

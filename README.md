@@ -8,9 +8,9 @@ This is the repository containing the challenge environment code.
 1. Create an agent which inherits from the `BaseAgent` class
 2. Add the agents you want to test to `train.py`
    - There are 2 places to add you agent. Look for the comment `# Add your agent here` for where to add your agent.
-3. Run `$ python train.py grid_configs/rooms-1.grd results/` to start training!
+3. Run `$ python train.py grid_configs/rooms-1.grd --out results/` to start training!
 
-`train.py` is just an example training script.
+`train.py` is just an example training script. 
 Feel free to modify it as necessary.
 In our basic example, we use command line arguments to select options for it.
 This may not be convenient for you and you can choose to replace this training script with whatever you want.
@@ -38,10 +38,9 @@ options:
                         Random seed value for the environment.
   --out OUT             Where to save training results.
 ```
-
 ## Code guide
 
-The code is made up of 3 modules:
+The code is made up of 3 modules: 
 
 1. `agent`
 2. `level_editor`
@@ -55,8 +54,7 @@ The `BaseAgent` is an abstract class and all RL agents for DIC must inherit from
 If you know/understand class inheritence, skip the following section
 
 #### `BaseAgent` as an abstract class
-
-Think of this like how all models in PyTorch start like
+Think of this like how all models in PyTorch start like 
 
 ```python
 class NewModel(nn.Module):
@@ -91,12 +89,8 @@ We also provide a `grid_generator.py` file to generate random grids, found in `l
 Usage is:
 
 ```bash
-<<<<<<< HEAD
-$ python grid_generator.py
-=======
 $ cd level_editor
-$ python grid_generator.py
->>>>>>> 1d2d3ef2ed6d4e66078e30ad9918eee1daef8d40
+$ python grid_generator.py 
 
 usage: grid_generator.py [-h] N_GRIDS N_ROOMS FILE_PREFIX
 
@@ -114,7 +108,6 @@ options:
 ### The `world` module
 
 The world module contains:
-
 1. `environment.py`
 2. `grid.py`
 3. `gui.py`
@@ -133,7 +126,7 @@ The main interaction with `Environment` is through the methods:
 
 Explanations for each of these methods and how to use them can be found in the examples in the `environment.py` files and in the documentation in the code itself.
 
-[^1]: In case you missed it, this sentence is a joke.
+[^1]: In case you missed it, this sentence is a joke. Please do not write all your code in the `Environment` class.
 
 #### The Grid
 
@@ -155,3 +148,5 @@ Because of this, we recommend using it only while testing/debugging and not whil
 - flask ~= 2.2
 - flask-socketio ~= 5.3
 - pillow ~= 9.4
+- colorcet ~=3.0
+

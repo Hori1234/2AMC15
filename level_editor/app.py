@@ -3,15 +3,10 @@
 Level editor so making grids is somewhat easier than writing it as a raw numpy
 array. Credit to Tom v. Meer for writing this up.
 """
+import ast
+
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
-<<<<<<< HEAD
-import ast
-from world import Grid
-=======
-
->>>>>>> 1d2d3ef2ed6d4e66078e30ad9918eee1daef8d40
-from level_editor import GRID_CONFIGS_FP
 
 # World may not be importable, depending on how you have set up your
 # conda/pip/venv environment. Here we try to fix that by forcing the world to
@@ -19,6 +14,7 @@ from level_editor import GRID_CONFIGS_FP
 # how to fix module import errors, or ask ChatGPT.
 try:
     from world import Grid
+    from level_editor import GRID_CONFIGS_FP
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -32,6 +28,7 @@ except ModuleNotFoundError:
         sys.path.append(root_path)
 
     from world import Grid
+    from level_editor import GRID_CONFIGS_FP
 
 
 # Initialize SocketIO App
