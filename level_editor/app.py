@@ -5,12 +5,9 @@ array. Credit to Tom v. Meer for writing this up.
 """
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO
-<<<<<<< HEAD
 import ast
 from world import Grid
-=======
 
->>>>>>> 1d2d3ef2ed6d4e66078e30ad9918eee1daef8d40
 from level_editor import GRID_CONFIGS_FP
 
 # World may not be importable, depending on how you have set up your

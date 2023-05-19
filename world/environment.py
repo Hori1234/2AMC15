@@ -106,6 +106,9 @@ class Environment:
         self.agent_start_pos = agent_start_pos  # Where agents initially start
         self.agent_done = [False] * n_agents
 
+        #Keep track of last place dirt was cleaned
+        self.last_dirt_clean = None
+
         # Set up reward function
         if reward_fn is None:
             warn("No reward function provided. Using default reward.")
@@ -405,6 +408,10 @@ class Environment:
                     )
                 case 4:  # Stand still
                     new_pos = (self.agent_pos[i][0], self.agent_pos[i][1])
+                case 5: # move back to starting position
+                    new_pos = self.agent_start_pos[i]
+                case 6: # move back to last dirt cleaned
+                    new_pos = self.last_dirt_clean if self.last_dirt_clean else self.agent_start_pos[i]
                 case _:
                     raise ValueError(
                         f"Provided action {action} for agent {i} "
@@ -414,6 +421,11 @@ class Environment:
 
         # Update the grid with the new agent positions and calculate the reward
         reward = self.reward_fn(self.grid, self.info)
+
+        #If picked up dirt, keep track of this position
+        if reward == 5:
+            self.last_dirt_clean = new_pos
+
         terminal_state = sum(self.agent_done) == self.n_agents
         if terminal_state:
             self.environment_ready = False
@@ -458,6 +470,7 @@ class Environment:
         agent_start_pos: list[tuple[int, int]] = None,
         random_seed: int | float | str | bytes | bytearray = 0,
         show_images: bool = False,
+        custom_file_name: str | None = None,
     ):
         """Evaluates a single trained agent's performance.
 
@@ -537,7 +550,7 @@ class Environment:
         print("Evaluation complete. Results:")
         # File name is the current date and time
         file_name = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
-        out_fp = out_dir / f"{file_name}.txt"
+        out_fp = out_dir / f"{file_name}.txt" if not custom_file_name else out_dir / f"{custom_file_name}.txt"
         with open(out_fp, "w") as f:
             for key, value in world_stats.items():
                 f.write(f"{key}: {value}\n")
@@ -546,7 +559,8 @@ class Environment:
         # Save the images
         for i, img in enumerate(path_images):
             img_name = f"{file_name}_agent-{i}"
-            out_fp = out_dir / f"{img_name}.png"
+            out_fp = out_dir / f"{img_name}.png" if not custom_file_name else out_dir / f"{custom_file_name}.png"
+            print('out_fp: ', out_fp, 'custom_file_name: ', custom_file_name)
             img.save(out_fp)
             if show_images:
                 img.show(f"Agent {i} Path Frequency")

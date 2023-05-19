@@ -56,6 +56,15 @@ def parse_args():
         help="Random seed value for the environment.",
     )
     p.add_argument("--out", type=Path, help="Where to save training results.")
+    p.add_argument("--fname", type=str, help="Filename to save results as.")
+    p.add_argument("--gamma", type=float, default=0.5, help="Discount factor.")
+    p.add_argument("--epsilon", type=float, default=0.1, help="Epsilon value.")
+    p.add_argument("--episode", type=int, default=100, help="Episode length.")
+    p.add_argument("--nconvergence", type=int, default=10, help="Number of episodes the optimal policy has to remain constant in order to confirm convergence.")
+    p.add_argument("--replace_agent_after_episode", type=bool, default=False, help="Control whether or not we replace the agent after each episode.")
+    p.add_argument("--replace_to_start", type=bool, default=False, help="Control whether or not we replace the agent after each episode to the start position or last cleaned dirt tile.")
+
+
 
     return p.parse_args()
 
@@ -103,8 +112,17 @@ def main(
     sigma: float,
     out: Path,
     random_seed: int,
+    fname: str,
+    gamma: float,
+    epsilon: float,
+    episode: int,
+    nconvergence: int,
+    replace_agent_after_episode: bool,
+    replace_to_start: bool,
 ):
     """Main loop of the program."""
+    print('sigma: ',sigma)
+
 
     for grid in grid_paths:
         # Set up the environment and reset it to its initial state
@@ -112,7 +130,7 @@ def main(
             grid,
             no_gui,
             n_agents=1,
-            # agent_start_pos=[(5, 10)],
+            agent_start_pos=[(1, 6)],
             sigma=sigma,
             target_fps=fps,
             random_seed=random_seed,
@@ -124,7 +142,7 @@ def main(
         # Add your agents here
         agents = [
             # QLearn_Agent(0,obs),
-            MCAgent(0, obs)
+            MCAgent(0, obs, gamma, epsilon, episode, nconvergence, replace_agent_after_episode, replace_to_start)
         ]
 
         # Iterate through each agent for `iters` iterations
@@ -139,16 +157,21 @@ def main(
                 # If the agent is terminated, we reset the env.
                 # for the 3 dirt env, also terminate if no drit left
                 # note that this extra statement has to be removed with new envs
-                if terminated or env.grid.sum_dirt() == 0:
+                if terminated: #or env.grid.sum_dirt() == 0:
                     obs, info, world_stats = env.reset()
-                    agent.dirt_found = [0, 0, 0]
 
-                agent.process_reward(obs, reward, info)
+                converged = agent.process_reward(obs, reward, info)
+                                
+                if converged:
+                    obs, info, world_stats = env.reset()
+                    print('Converged!')
+                    break
+
             obs, info, world_stats = env.reset()
             agent.update_policy(optimal=True)
             print(world_stats)
             Environment.evaluate_agent(
-                grid, [agent], 100, out, 0.2, agent_start_pos=[(7, 5)]
+                grid, [agent], 100, out, 0.2, agent_start_pos=[(1, 6)], custom_file_name=fname+f"-converged-{converged}"
             )
 
 
@@ -162,4 +185,11 @@ if __name__ == "__main__":
         args.sigma,
         Path("results/"),
         args.random_seed,
+        args.fname,
+        args.gamma,
+        args.epsilon,
+        args.episode,
+        args.nconvergence,
+        args.replace_agent_after_episode,
+        args.replace_to_start
     )
