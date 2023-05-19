@@ -391,6 +391,9 @@ class Environment:
                 actual_action = action
             else:
                 actual_action = random.randint(0, 4)
+                print()
+                print(f"Action {action} failed. Instead doing {actual_action}")
+                print()
             match actual_action:
                 case 0:  # Move down
                     new_pos = (
@@ -418,6 +421,10 @@ class Environment:
                         f"is not one of the possible actions."
                     )
             self._move_agent(new_pos, i)
+
+            #set agent_moved to false if actual_action is stand_still
+            if actual_action == 4:
+                self.info["agent_moved"][i] = False
 
         # Update the grid with the new agent positions and calculate the reward
         reward = self.reward_fn(self.grid, self.info)
