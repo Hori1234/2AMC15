@@ -18,7 +18,8 @@ try:
     from agents.null_agent import NullAgent
     from agents.greedy_agent import GreedyAgent
     from agents.random_agent import RandomAgent
-    from agents.q_learning_agent import QAgent
+    from agents.q_learning_agent import QAgent as QAgent1
+    from agents.q_learning_agent_v2 import QAgent as QAgent2
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -37,7 +38,8 @@ except ModuleNotFoundError:
     from agents.null_agent import NullAgent
     from agents.greedy_agent import GreedyAgent
     from agents.random_agent import RandomAgent
-    from agents.q_learning_agent import QAgent
+    from agents.q_learning_agent import QAgent as QAgent1
+    from agents.q_learning_agent_v2 import QAgent as QAgent2
 
 
 def parse_args():
@@ -97,15 +99,15 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
 
     for grid in grid_paths:
         # Set up the environment and reset it to its initial state
-        env = Environment(grid, no_gui, n_agents=1,
+        env = Environment(grid, no_gui, n_agents=1, agent_start_pos=None,
                           sigma=sigma, target_fps=fps, random_seed=random_seed, reward_fn=reward_function)
         obs, info = env.get_observation()
 
         # Set up the agents from scratch for every grid
         # Add your agents here
         agents = [
-            QAgent(0, learning_rate=1, discount_rate=0.5,
-                   epsilon_decay=0.001),
+            QAgent2(0, learning_rate=1, discount_rate=0.5,
+                    epsilon_decay=0.001),
         ]
 
         # Iterate through each agent for `iters` iterations
@@ -135,7 +137,10 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
             obs, info, world_stats = env.reset()
             print(world_stats)
 
-            Environment.evaluate_agent(grid, [agent], 1000, out, 0.2)
+            import numpy as np
+            np.save('test2.npy', agent.q_table)
+
+            Environment.evaluate_agent(grid, [agent], 1000, out, 0)
 
 
 if __name__ == '__main__':

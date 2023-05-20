@@ -54,6 +54,9 @@ class QAgent(BaseAgent):
         self.q_table[old_state][action] = (1-self.lr)*self.q_table[old_state][action] + self.lr * (
             reward + self.dr*np.max(self.q_table[new_state]))
 
+        # testidx = [slice(None)]*2 + [1]*(self.q_table.ndim-2)
+        # print(self.q_table[tuple(testidx)])
+
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
         # print(info)
         if self.dirty_tiles is None:
@@ -65,6 +68,7 @@ class QAgent(BaseAgent):
             shape = [np.shape(observation)[0], np.shape(observation)[
                 1]] + [2 for i in range(num_of_dirty_tiles)] + [4]
             self.q_table = np.zeros(shape)
+            print(np.shape(self.q_table))
 
         x, y = info["agent_pos"][self.agent_number]
 
