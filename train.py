@@ -18,8 +18,7 @@ try:
     from agents.null_agent import NullAgent
     from agents.greedy_agent import GreedyAgent
     from agents.random_agent import RandomAgent
-    from agents.q_learning_agent import QAgent as QAgent1
-    from agents.q_learning_agent_v2 import QAgent as QAgent2
+    from agents.q_learning_agent import QAgent
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -38,8 +37,7 @@ except ModuleNotFoundError:
     from agents.null_agent import NullAgent
     from agents.greedy_agent import GreedyAgent
     from agents.random_agent import RandomAgent
-    from agents.q_learning_agent import QAgent as QAgent1
-    from agents.q_learning_agent_v2 import QAgent as QAgent2
+    from agents.q_learning_agent import QAgent
 
 
 def parse_args():
@@ -106,18 +104,17 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
         # Set up the agents from scratch for every grid
         # Add your agents here
         agents = [
-            QAgent2(0, learning_rate=1, discount_rate=0.5,
-                    epsilon_decay=0.001),
+            QAgent(0, learning_rate=1, discount_rate=0.8,
+                   epsilon_decay=0.001),
         ]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
-            episode = 1
-            print(f'Episode: {episode}')
             for _ in trange(iters):
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
                 old_state = info["agent_pos"][agent.agent_number]
+
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
                 new_state = info['agent_pos'][agent.agent_number]
@@ -128,17 +125,12 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
-                    episode += 1
-                    print(f'Episode: {episode}')
 
                 if agent.eps == 0:
                     break
 
             obs, info, world_stats = env.reset()
             print(world_stats)
-
-            import numpy as np
-            np.save('test2.npy', agent.q_table)
 
             Environment.evaluate_agent(grid, [agent], 1000, out, 0)
 

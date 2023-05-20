@@ -5,6 +5,7 @@ Chooses the best scoring value with no thought about the future.
 import numpy as np
 from random import randint
 from agents import BaseAgent
+from copy import copy
 
 
 class QAgent(BaseAgent):
@@ -20,71 +21,85 @@ class QAgent(BaseAgent):
         self.dr = discount_rate
         self.ed = epsilon_decay
         self.eps = 1
-        self.dirty_tiles = None
+        self.dirty_tiles = []
         self.episode = 0
+        self.initialized = False
+        self.tile_state = []
 
     def process_reward(self, observation: np.ndarray, info: None | dict, reward: float, old_state: tuple, new_state: tuple, action: int):
-        tile_state = []
-        for dirty_tile in self.dirty_tiles:
-            if observation.T[dirty_tile[0]][dirty_tile[1]] == 3:
-                tile_state += [1]
-            else:
-                tile_state += [0]
+        x, y = info["agent_pos"][self.agent_number]
+        old_h, old_w = np.shape(self.q_table)[0], np.shape(self.q_table)[1]
+        if x+1 > np.shape(self.q_table)[0]:
+            temp_q_table = self.q_table
+            shape = [np.shape(self.q_table)[0]+1, np.shape(self.q_table)
+                     [1]] + [2 for i in range(len(self.tile_state))] + [4]
+            self.q_table = np.zeros(shape)
+            self.q_table[:old_h, :old_w] = temp_q_table
 
-        new_state = [new_state[0], new_state[1]] + tile_state
-        new_state = tuple(new_state)
+        elif y+1 > np.shape(self.q_table)[1]:
+            temp_q_table = self.q_table
+            shape = [np.shape(self.q_table)[0], np.shape(self.q_table)[
+                1]+1] + [2 for i in range(len(self.tile_state))] + [4]
+            self.q_table = np.zeros(shape)
+            self.q_table[:old_h, :old_w] = temp_q_table
+
+        old_tile_state = copy(self.tile_state)
 
         if sum(info["dirt_cleaned"]) == 1:
-            index = self.dirty_tiles.index(
-                (info["agent_pos"][self.agent_number][1], info["agent_pos"][self.agent_number][0]))
-            tile_state[index] = 1
-        old_state = [old_state[0], old_state[1]] + tile_state
+            # If dirty tile not yet recorded, expand the statespace and remember the dirty tile.
+            if (x, y) not in self.dirty_tiles:
+                old_tile_state = self.updateShapeQ(x, y, old_tile_state)
+
+        new_state = [new_state[0], new_state[1]] + self.tile_state
+        new_state = tuple(new_state)
+
+        old_state = [old_state[0], old_state[1]] + old_tile_state
         old_state = tuple(old_state)
 
+        # If the agent is charging, the episode has ended and update the epsilon value for the subsequent episode.
         if info['agent_charging'][self.agent_number] == True:
-            # print("DECAY EPSILON")
-
             self.eps = max(0, self.eps - self.ed)
-            # print("New value epsilon: ", self.eps)
+            self.tile_state = [1 for i in range(len(self.tile_state))]
 
+        # Update the Q table
         self.updateQ(old_state, new_state, action, reward)
+
+    def updateShapeQ(self, x, y, old_tile_state):
+        self.dirty_tiles += [(x, y)]
+        self.tile_state += [0]
+        old_tile_state += [1]
+        temp_q_table = self.q_table
+        shape = [np.shape(self.q_table)[0], np.shape(self.q_table)[
+            1]] + [2 for i in range(len(self.tile_state))] + [4]
+        self.q_table = np.zeros(shape)
+        idx = [slice(None)]*self.q_table.ndim
+        axis = -2
+        idx[axis] = 1
+        self.q_table[tuple(idx)] = temp_q_table
+        return old_tile_state
 
     def updateQ(self, old_state, new_state, action, reward):
         # Bellman equation
         self.q_table[old_state][action] = (1-self.lr)*self.q_table[old_state][action] + self.lr * (
             reward + self.dr*np.max(self.q_table[new_state]))
 
-        # testidx = [slice(None)]*2 + [1]*(self.q_table.ndim-2)
-        # print(self.q_table[tuple(testidx)])
-
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
-        # print(info)
-        if self.dirty_tiles is None:
-            # print(observation.T)
-            self.dirty_tiles = list(zip(np.where(observation.T == 3)[
-                0], np.where(observation.T == 3)[1]))
-            num_of_dirty_tiles = len(self.dirty_tiles)
-            # print(num_of_dirty_tiles)
-            shape = [np.shape(observation)[0], np.shape(observation)[
-                1]] + [2 for i in range(num_of_dirty_tiles)] + [4]
-            self.q_table = np.zeros(shape)
-            print(np.shape(self.q_table))
-
         x, y = info["agent_pos"][self.agent_number]
 
+        if self.dirty_tiles:
+            if (x, y) in self.dirty_tiles:
+                index = self.dirty_tiles.index((x, y))
+                self.tile_state[index] = 0
+
+        if not self.initialized:
+            self.q_table = np.zeros((x+1, y+1, 4))
+            self.initialized = True
+
         eps = np.random.uniform(0, 1)
+
         if eps > self.eps:
-
-            tile_state = []
-            for dirty_tile in self.dirty_tiles:
-                if observation.T[dirty_tile[0]][dirty_tile[1]] == 3:
-                    tile_state += [1]
-                else:
-                    tile_state += [0]
-
-            new_state = [x, y] + tile_state
+            new_state = [x, y] + self.tile_state
             new_state = tuple(new_state)
-
             return np.argmax(self.q_table[new_state])
         else:
             return randint(0, 3)
