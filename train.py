@@ -65,13 +65,6 @@ def parse_args():
 def reward_function(grid: Grid, info: dict) -> float:
     """This is the default reward function.
 
-    This is a very simple default reward function. It simply checks if any
-    dirt tiles were cleaned during the step and provides a reward equal to
-    the total number of dirt tiles cleaned.
-
-    Any custom reward function must also follow the same signature, meaning
-    it must be written like `reward_name(grid, info)`.
-
     Args:
         grid: The grid the agent is moving on, in case that is needed by
             the reward function.
@@ -126,13 +119,15 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                 if terminated:
                     obs, info, world_stats = env.reset()
 
+                # Early stopping criterion.
                 if agent.eps == 0:
                     break
 
             obs, info, world_stats = env.reset()
             print(world_stats)
 
-            Environment.evaluate_agent(grid, [agent], 1000, out, 0)
+            Environment.evaluate_agent(
+                grid, [agent], 1000, out, 0, agent_start_pos=None)
 
 
 if __name__ == '__main__':
