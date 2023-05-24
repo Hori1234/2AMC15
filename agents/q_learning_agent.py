@@ -9,7 +9,7 @@ from copy import copy
 
 
 class QAgent(BaseAgent):
-    def __init__(self, agent_number, learning_rate=0.2, discount_rate=0.99, epsilon_decay=0.01, epsilon_step_increment=0.0001):
+    def __init__(self, agent_number, learning_rate=0.2, gamma=0.99, epsilon_decay=0.01, epsilon_step_increment=0.0001):
         """Chooses an action randomly unless there is something neighboring.
 
         Args:
@@ -18,7 +18,7 @@ class QAgent(BaseAgent):
         super().__init__(agent_number)
         self.q_table = None
         self.lr = learning_rate
-        self.dr = discount_rate
+        self.gamma = gamma
         self.ed = epsilon_decay
         self.eps = 1
         self.dirty_tiles = []
@@ -138,7 +138,7 @@ class QAgent(BaseAgent):
     def updateQ(self, old_state, new_state, action, reward):
         # Update the Q table using the Bellman equation.
         self.q_table[old_state][action] = (1-self.lr)*self.q_table[old_state][action] + self.lr * (
-            reward + self.dr*np.max(self.q_table[new_state]))
+            reward + self.gamma*np.max(self.q_table[new_state]))
 
     def add_zero_column(self, array):
         """This function adds an array of zeros to the first axis.

@@ -10,6 +10,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from tqdm import trange
+import time
 
 try:
     from world import Environment
@@ -19,6 +20,7 @@ try:
     from agents.greedy_agent import GreedyAgent
     from agents.random_agent import RandomAgent
     from agents.q_learning_agent import QAgent
+    from agents.mc_agent import MCAgent
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -38,6 +40,7 @@ except ModuleNotFoundError:
     from agents.greedy_agent import GreedyAgent
     from agents.random_agent import RandomAgent
     from agents.q_learning_agent import QAgent
+    from agents.mc_agent import MCAgent
 
 
 def parse_args():
@@ -90,20 +93,23 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
 
     for grid in grid_paths:
         # Set up the environment and reset it to its initial state
-        env = Environment(grid, no_gui, n_agents=1, agent_start_pos=None,
+        env = Environment(grid, no_gui, n_agents=1, agent_start_pos=[(1, 1)],
                           sigma=sigma, target_fps=fps, random_seed=random_seed, reward_fn=reward_function)
         obs, info = env.get_observation()
 
         # Set up the agents from scratch for every grid
         # Add your agents here
         agents = [
-            QAgent(0, learning_rate=1, discount_rate=0.8,
-                   epsilon_decay=0.001),
+            QAgent(0, learning_rate=1, gamma=0.8, epsilon_decay=0.001),
+            MCAgent(0, obs, 0.6, epsilon=0.1,
+                    len_episode=100, n_times_no_policy_change_for_convergence=100)
         ]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
-            for _ in trange(iters):
+            fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
+
+            for i in trange(iters):
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
                 old_state = info["agent_pos"][agent.agent_number]
@@ -112,8 +118,13 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                 obs, reward, terminated, info = env.step([action])
                 new_state = info['agent_pos'][agent.agent_number]
 
-                converged = agent.process_reward(
-                    obs, info, reward, old_state, new_state, action)
+                if type(agent).__name__ == "QAgent":
+                    converged = agent.process_reward(
+                        obs, info, reward, old_state, new_state, action)
+
+                else:
+                    converged = agent.process_reward(
+                        obs, reward, info)
 
                 # If the agent is terminated, we reset the env.
                 if terminated:
@@ -127,7 +138,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
             print(world_stats)
 
             Environment.evaluate_agent(
-                grid, [agent], 1000, out, 0, agent_start_pos=None)
+                grid, [agent], 1000, out, 0, agent_start_pos=None, custom_file_name=fname+f"-converged-{converged}-n-iters-{i}")
 
 
 if __name__ == '__main__':
