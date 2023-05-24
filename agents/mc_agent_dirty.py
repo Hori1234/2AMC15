@@ -6,35 +6,24 @@ from copy import deepcopy
 
 
 class MCAgent(BaseAgent):
-    def __init__(self, agent_number, obs: np.ndarray, gamma, epsilon, len_episode, n_times_no_policy_change_for_convergence):
-        """
-        Initialize the agent.
-
-        Parameters
-        ----------
-        agent_number : int
-            The number of the agent. This is used to identify the agent in the
-            environment.
-        obs : np.ndarray
-            The initial observation of the environment.
-        gamma : float
-            The discount factor.
-        epsilon : float
-            The probability of choosing a random action instead of the optimal
-            one.
-        len_episode : int
-            The maximum length of an episode.
-        n_times_no_policy_change_for_convergence : int
-            The number of times the optimal policy has to be the same before
-            the agent considers it converged.
-        """
+    def __init__(self, agent_number, obs: np.ndarray, gamma, epsilon, len_episode, n_times_no_policy_change_for_convergence, replace_agent_after_episode, replace_to_start):
+        """TODO write docstring here"""
         super().__init__(agent_number)
 
-        self.max_len_episode    = len_episode
-        self.gamma              = gamma
-        self.epsilon            = epsilon
+        # Variables to set (maybe as parameters in the constructor)
+        self.max_len_episode = len_episode
+        self.gamma = gamma
+        self.epsilon = epsilon
         self.n_times_no_policy_change_for_convergence = n_times_no_policy_change_for_convergence
+        self.replace_agent_after_episode = replace_agent_after_episode
+        self.replace_to_start = replace_to_start #If false, place back at last cleaned dirt
+
         self.times_finished = 0
+        # Keeps track of our initial position, and last places we found dirt.
+        # If we have bene moving for too long without success, we'll reset to
+        # this location. Initial value will be set in teke_action because we
+        # don't know our initial position yet.
+        # self.reset_location = None
 
         self.x_size, self.y_size = obs.shape
         self.A = [0, 1, 2, 3, 4]
@@ -53,9 +42,6 @@ class MCAgent(BaseAgent):
             for _ in range(self.x_size)
         ]
 
-
-        # Create a 3D array named Q, where each entry is a dictionary
-        # with keys the actions and values the Q values
         self.Q = [
             [
                 {
@@ -70,8 +56,6 @@ class MCAgent(BaseAgent):
             for _ in range(self.x_size)
         ]
 
-        # Create a 2D array named policy, where each entry is an integer
-        # representing the action to take in each state
         self.policy = np.zeros((self.x_size, self.y_size))
         self.old_optimal_policy = np.zeros((self.x_size, self.y_size))
         self.optimal_policy = np.zeros((self.x_size, self.y_size))
@@ -81,40 +65,36 @@ class MCAgent(BaseAgent):
         self.update_policy()
 
         # to keep track of (s,a,r) of each step in episode
-        # we use a deque for efficiency
         self.episode = deque()
         self.episode_rewards = deque()
+
 
     def process_reward(self, obs: np.ndarray, reward: float, info):
         """
         Check if terminated (we assume that happens if charging station reached) Or maximum number of steps reached in episode.
         If so -> update Q and policy and reset episode.
-
-        Parameters
-        ----------
-        obs : np.ndarray
-            The observation of the environment.
-        reward : float
-            The reward obtained from the environment.
-        info : dict
-            Additional information from the environment.
         """
+        #print("Reward received here is {}".format(reward))
 
         # Add reward obtained to the list with rewards
         self.episode_rewards.append(reward)
 
         # Check if terminated (=end of episode or charging station reached with all dirt cleaned)
         if reward == 10 or len(self.episode_rewards) >= self.max_len_episode:
-            # if the reward is 10, the charging station was reached with all dirt cleaned
-            # so times_finished is increased by 1
             if reward == 10:
                 self.times_finished += 1
-            
             # update Q and policy
             self.update_Q()
-            self.update_policy()
+            #print("Q updated, it is now: {}".format(self.Q))
 
-            # reset episode for next iteration
+            #print("Self.returns is {}".format(self.Returns))
+            # print("Q updated, the starting squares {}".format(self.Q[1, 1]))
+            # print("Q updated, the starting squares {}".format(self.Q[1, 2]))
+            # print("Q updated, the starting squares {}".format(self.Q[2, 1]))
+            self.update_policy()
+            #print("Policy updated, it is now: \n {}".format(self.policy))
+
+            # reset episode
             self.reset_episode()
 
             return self.check_convergence()
@@ -230,35 +210,43 @@ class MCAgent(BaseAgent):
                 self.optimal_policy[x, y] = max_key
     
     def check_convergence(self):
-        """
-        Check if the policy has converged. This is done by comparing the current policy
-        """
         # only check for convergence after the end is reached a number of times
-        # this prevents the agent from converging too early, as it might not have
-        # seen all states yet
         if self.times_finished> 4:
             if np.array_equal(self.optimal_policy, self.old_optimal_policy):
-                self.constant_optimal_policy_counter += 1       
+                self.constant_optimal_policy_counter += 1
+                # print(f"""
+                # No change in policy.
+                # counter: {self.constant_optimal_policy_counter}
+                # """)            
             else:
                 self.constant_optimal_policy_counter = 0
-
+            #return False
             output = True if self.constant_optimal_policy_counter >= self.n_times_no_policy_change_for_convergence else False
+            if(output):
+                print(f"""
+                Convergence reached.
+                counter: {self.constant_optimal_policy_counter}
+                """)
             return output
+
 
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
         """
         Return the action that should be taken by the agent, based on the current
         policy and state (= (x,y)).
-
-        Args:
-            observation (np.ndarray): The current observation of the environment.
-            info (None | dict): The info dict of the environment.
-
         """
+        # If we are at the end of an episode, move back to the starting position 
+        # or the last place dirt was found
+        if (len(self.episode) == self.max_len_episode - 1) and self.replace_agent_after_episode:
+            return 5 if self.replace_to_start else 6
 
         # Get the x,y values of the state
         x, y = info["agent_pos"][self.agent_number]
         x, y = int(x), int(y)
+
+        # If this is the initial location, set this as place to reset to
+        # self.reset_location = (x, y)
+
 
         # For current state, get the action based on the current policy
         next_action = self.policy[x][y]
@@ -268,3 +256,4 @@ class MCAgent(BaseAgent):
         #print("action to be taken: ", next_action)
         # return the action we take
         return next_action
+

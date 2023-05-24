@@ -106,8 +106,6 @@ class Environment:
         self.agent_start_pos = agent_start_pos  # Where agents initially start
         self.agent_done = [False] * n_agents
 
-        #Keep track of last place dirt was cleaned
-        self.last_dirt_clean = None
 
         # Set up reward function
         if reward_fn is None:
@@ -387,13 +385,12 @@ class Environment:
 
             # Add stochasticity into the agent action
             val = random.random()
+
             if val > self.sigma:
                 actual_action = action
             else:
                 actual_action = random.randint(0, 4)
-                print()
-                print(f"Action {action} failed. Instead doing {actual_action}")
-                print()
+
             match actual_action:
                 case 0:  # Move down
                     new_pos = (
@@ -411,10 +408,6 @@ class Environment:
                     )
                 case 4:  # Stand still
                     new_pos = (self.agent_pos[i][0], self.agent_pos[i][1])
-                case 5: # move back to starting position
-                    new_pos = self.agent_start_pos[i]
-                case 6: # move back to last dirt cleaned
-                    new_pos = self.last_dirt_clean if self.last_dirt_clean else self.agent_start_pos[i]
                 case _:
                     raise ValueError(
                         f"Provided action {action} for agent {i} "
@@ -428,10 +421,6 @@ class Environment:
 
         # Update the grid with the new agent positions and calculate the reward
         reward = self.reward_fn(self.grid, self.info)
-
-        #If picked up dirt, keep track of this position
-        if reward == 5:
-            self.last_dirt_clean = new_pos
 
         terminal_state = sum(self.agent_done) == self.n_agents
         if terminal_state:

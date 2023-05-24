@@ -18,6 +18,7 @@ from agents.q_learn_agent import QLearn_Agent
 from agents.mc_agent import MCAgent
 
 from world.grid import Grid
+import time
 
 
 # from environment import reward_function
@@ -47,7 +48,7 @@ def parse_args():
         help="Frames per second to render at. Only used if " "no_gui is not set.",
     )
     p.add_argument(
-        "--iter", type=int, default=1000, help="Number of iterations to go through."
+        "--iter", type=int, default=1000000, help="Number of iterations to go through."
     )
     p.add_argument(
         "--random_seed",
@@ -56,20 +57,12 @@ def parse_args():
         help="Random seed value for the environment.",
     )
     p.add_argument("--out", type=Path, help="Where to save training results.")
-    p.add_argument("--fname", type=str, help="Filename to save results as.")
-    p.add_argument("--gamma", type=float, default=0.5, help="Discount factor.")
-    p.add_argument("--epsilon", type=float, default=0.1, help="Epsilon value.")
-    p.add_argument("--episode", type=int, default=100, help="Episode length.")
-    p.add_argument("--nconvergence", type=int, default=10, help="Number of episodes the optimal policy has to remain constant in order to confirm convergence.")
-    p.add_argument("--replace_agent_after_episode", type=bool, default=False, help="Control whether or not we replace the agent after each episode.")
-    p.add_argument("--replace_to_start", type=bool, default=False, help="Control whether or not we replace the agent after each episode to the start position or last cleaned dirt tile.")
-
-
 
     return p.parse_args()
 
 
 def custom_reward_function(grid: Grid, info: dict) -> float:
+    #print("after this setp the info is: ", info)
     """
     Reward of taking each step: -1 (to encourage the agent to clean
     faster and in case of an action that takes the agent to an obstacle,
@@ -91,13 +84,15 @@ def custom_reward_function(grid: Grid, info: dict) -> float:
     # dus bijv [0, 1, 0] en moet je dus niet altijd de 1e index hebben zoals ik dat nu wel heb gedaan
     if info["dirt_cleaned"][0] > 0:
         reward = 5
-    elif not info["agent_moved"][0]:
-        reward = -5
+
     elif info["agent_charging"][0]:
+        #print("The agent is charging, and the amount of dirt left is: ", grid.sum_dirt())
         if grid.sum_dirt() == 0:
             reward = 10
         else:
             reward = -1
+    elif not info["agent_moved"][0]:
+        reward = -5
     else:
         reward = -1
 
@@ -112,13 +107,6 @@ def main(
     sigma: float,
     out: Path,
     random_seed: int,
-    fname: str,
-    gamma: float,
-    epsilon: float,
-    episode: int,
-    nconvergence: int,
-    replace_agent_after_episode: bool,
-    replace_to_start: bool,
 ):
     """Main loop of the program."""
     print('sigma: ',sigma)
@@ -130,7 +118,8 @@ def main(
             grid,
             no_gui,
             n_agents=1,
-            agent_start_pos=[(1, 6)],
+            #agent_start_pos=None,
+            agent_start_pos=[(1, 1)],
             sigma=sigma,
             target_fps=fps,
             random_seed=random_seed,
@@ -140,14 +129,20 @@ def main(
 
         # Set up the agents from scratch for every grid
         # Add your agents here
+        gamma, epsilon, episode, nconvergence = 0.9, 0.1, 100, 100
         agents = [
             # QLearn_Agent(0,obs),
-            MCAgent(0, obs, gamma, epsilon, episode, nconvergence, replace_agent_after_episode, replace_to_start)
-        ]
+            MCAgent(0, obs, gamma, epsilon, episode, nconvergence),
+            MCAgent(0, obs, 0.6, epsilon, episode, nconvergence)
 
+        ]
         # Iterate through each agent for `iters` iterations
         for agent in agents:
-            for _ in trange(iters):
+            #create an agent with a specific name, and the gamma epsilon, episode and nconvergence parameters
+
+            fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{gamma}-n_iters{iters}-time-{time.time()}"
+
+            for i in trange(iters):
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
 
@@ -163,15 +158,16 @@ def main(
                 converged = agent.process_reward(obs, reward, info)
                                 
                 if converged:
-                    obs, info, world_stats = env.reset()
-                    print('Converged!')
                     break
 
             obs, info, world_stats = env.reset()
-            agent.update_policy(optimal=True)
+            #if we are looking at the mc_agent we want to update the policy
+            if type(agent).__name__ == "MCAgent":
+                agent.update_policy(optimal=True)
+
             print(world_stats)
             Environment.evaluate_agent(
-                grid, [agent], 100, out, 0.2, agent_start_pos=[(1, 6)], custom_file_name=fname+f"-converged-{converged}"
+                grid, [agent], 500, out, sigma, agent_start_pos=[(1,1)], custom_file_name=fname+f"-converged-{converged}-n-iters-{i}"
             )
 
 
@@ -185,11 +181,4 @@ if __name__ == "__main__":
         args.sigma,
         Path("results/"),
         args.random_seed,
-        args.fname,
-        args.gamma,
-        args.epsilon,
-        args.episode,
-        args.nconvergence,
-        args.replace_agent_after_episode,
-        args.replace_to_start
     )

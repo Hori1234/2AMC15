@@ -1,8 +1,8 @@
 import subprocess
 
 
-sigmas = [0.5, 0.7, 0.9] #[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-gammas = [0.3, 0.5, 0.8]
+sigmas = [1] #[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+gammas = [0.6, 0.9]
 epsilons = [0.1, 0.5, 0.8]
 episodes = [10, 30, 60, 100] #, 200, 300, 400, 500, 800, 1000, 2000]
 iters = [500000, 1000000]
@@ -28,11 +28,14 @@ for sigma in sigmas:
                                     print(f"Run {count}/{n_combis} -- {round(count/n_combis,2)}%")
 
                                     output_path = f"sigma-{sigma}-gamma-{gamma}-epsilon-{epsilon}-episode-{episode}-nconvergence-{nconvergence}-iter-{iter}-replace-{replace_agent_after_episode}-replace_start-{replace_to_start}"
-                                    command = f"python train.py grid_configs/1-dirt-1-charger.grd results/ --no_gui --iter 100000 --fname {output_path} --sigma {sigma} --gamma {gamma} --epsilon {epsilon} --episode {episode} --nconvergence {nconvergence} --replace_agent_after_episode {replace_agent_after_episode} --replace_to_start {replace_to_start}"
+                                    print(output_path)
+                                    command = f"python train.py grid_configs/final_test_single.grd results/mc_tests_final --no_gui --iter 100000 --fname {output_path} --sigma {sigma} --gamma {gamma} --epsilon {epsilon} --episode {episode} --nconvergence {nconvergence} --replace_agent_after_episode {replace_agent_after_episode} --replace_to_start {replace_to_start}"
 
                                     # Run the command in the command prompt or terminal
                                     result = subprocess.run(command, shell=True, capture_output=True, text=True)
-
+                                    
+                                    # Print the error if there is any
+                                    print(result.stderr)
                                     # Print the output
                                     print(result.stdout)
 
