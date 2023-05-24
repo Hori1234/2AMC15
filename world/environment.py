@@ -578,7 +578,7 @@ if __name__ == "__main__":
         "C:/Users/20173850/Documents/2AMC15/Assignment/GitHub/2AMC15-2023-DIC/grid_configs/testroom.grd"
     )
     envi = Environment(
-        base_grid_fp, False, 1, target_fps=5, reward_fn=custom_reward_function
+        base_grid_fp, False, 1, target_fps=5
     )
     observe, inf = envi.get_observation()
 

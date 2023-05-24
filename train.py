@@ -12,9 +12,14 @@ from pathlib import Path
 from tqdm import trange
 import time
 
+# TODO: Choose the value for sigma we want to use for the simple grid
+# or maybe we want to keep gamma constant?
+TWO_EXPERIMENTS_SIGMA = 0
+
 try:
     from world import Environment
     from world.grid import Grid
+
     # Add your agents here
     from agents.null_agent import NullAgent
     from agents.greedy_agent import GreedyAgent
@@ -26,8 +31,8 @@ except ModuleNotFoundError:
     from os import pardir
     import sys
 
-    root_path = path.abspath(path.join(
-        path.join(path.abspath(__file__), pardir), pardir)
+    root_path = path.abspath(
+        path.join(path.join(path.abspath(__file__), pardir), pardir)
     )
 
     if root_path not in sys.path:
@@ -45,22 +50,30 @@ except ModuleNotFoundError:
 
 def parse_args():
     p = ArgumentParser(description="DIC Reinforcement Learning Trainer.")
-    p.add_argument("GRID", type=Path, nargs="+",
-                   help="Paths to the grid file to use. There can be more than "
-                        "one.")
-    p.add_argument("--no_gui", action="store_true",
-                   help="Disables rendering to train faster")
-    p.add_argument("--sigma", type=float, default=0.,
-                   help="Sigma value for the stochasticity of the environment.")
-    p.add_argument("--fps", type=int, default=30,
-                   help="Frames per second to render at. Only used if "
-                        "no_gui is not set.")
-    p.add_argument("--iter", type=int, default=100000,
-                   help="Number of iterations to go through.")
-    p.add_argument("--random_seed", type=int, default=0,
-                   help="Random seed value for the environment.")
-    p.add_argument("--out", type=Path, default=Path("results/"),
-                   help="Where to save training results.")
+    p.add_argument(
+        "--no_gui", action="store_true", help="Disables rendering to train faster"
+    )
+    p.add_argument(
+        "--fps",
+        type=int,
+        default=30,
+        help="Frames per second to render at. Only used if " "no_gui is not set.",
+    )
+    p.add_argument(
+        "--iter", type=int, default=100000, help="Number of iterations to go through."
+    )
+    p.add_argument(
+        "--random_seed",
+        type=int,
+        default=0,
+        help="Random seed value for the environment.",
+    )
+    p.add_argument(
+        "--out",
+        type=Path,
+        default=Path("results/"),
+        help="Where to save training results.",
+    )
 
     return p.parse_args()
 
@@ -77,9 +90,9 @@ def reward_function(grid: Grid, info: dict) -> float:
         A single floating point value representing the reward for a given
         action.
     """
-    if info['agent_charging'][0] == True:
+    if info["agent_charging"][0] == True:
         return float(10)
-    elif info['agent_moved'][0] == False:
+    elif info["agent_moved"][0] == False:
         return float(-5)
     elif sum(info["dirt_cleaned"]) < 1:
         return float(-1)
@@ -87,61 +100,117 @@ def reward_function(grid: Grid, info: dict) -> float:
         return float(5)
 
 
-def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
-         sigma: float, out: Path, random_seed: int):
+def main(
+    no_gui: bool,
+    iters: int,
+    fps: int,
+    out: Path,
+    random_seed: int,
+):
     """Main loop of the program."""
 
-    for grid in grid_paths:
-        # Set up the environment and reset it to its initial state
-        env = Environment(grid, no_gui, n_agents=1, agent_start_pos=[(1, 1)],
-                          sigma=sigma, target_fps=fps, random_seed=random_seed, reward_fn=reward_function)
-        obs, info = env.get_observation()
+    # add two grid paths we'll use for evaluating
+    grid_paths = [
+        Path("grid_configs/simple1.grd"),
+        Path("grid_configs/20-10-grid.grd"),
+    ]
 
-        # Set up the agents from scratch for every grid
-        # Add your agents here
-        agents = [
-            QAgent(0, learning_rate=1, gamma=0.8, epsilon_decay=0.001),
-            MCAgent(0, obs, 0.6, epsilon=0.1,
-                    len_episode=100, n_times_no_policy_change_for_convergence=100)
-        ]
+    # test for 2 different sigma values
+    for sigma in [0, 0.4]:
+        for grid in grid_paths:
+            # Set up the environment and reset it to its initial state
+            env = Environment(
+                grid,
+                no_gui,
+                n_agents=1,
+                agent_start_pos=[(1, 1)],
+                target_fps=fps,
+                random_seed=random_seed,
+                reward_fn=reward_function,
+            )
+            obs, info = env.get_observation()
 
-        # Iterate through each agent for `iters` iterations
-        for agent in agents:
-            fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
+            # add all agents to test
+            agents = [
+                QAgent(0, learning_rate=1, gamma=0.6, epsilon_decay=0.001),
+                QAgent(0, learning_rate=1, gamma=0.9, epsilon_decay=0.001),
+                MCAgent(
+                    0,
+                    obs,
+                    gamma=0.6,
+                    epsilon=0.1,
+                    len_episode=100,
+                    n_times_no_policy_change_for_convergence=100,
+                ),
+                MCAgent(
+                    0,
+                    obs,
+                    gamma=0.9,
+                    epsilon=0.1,
+                    len_episode=100,
+                    n_times_no_policy_change_for_convergence=100,
+                ),
+                # TODO: add agent from Casper/Stan with gamma=0.6
+                # TODO: add agent from Casper/Stan with gamma=0.9
+            ]
 
-            for i in trange(iters):
-                # Agent takes an action based on the latest observation and info
-                action = agent.take_action(obs, info)
-                old_state = info["agent_pos"][agent.agent_number]
+            # Iterate through each agent for `iters` iterations
+            for agent in agents:
+                # Make sure that for the simple grid, we only run the one experiments
+                if (sigma != TWO_EXPERIMENTS_SIGMA) and (
+                    grid == Path("grid_configs/simple1.grd")
+                ):
+                    continue
 
-                # The action is performed in the environment
-                obs, reward, terminated, info = env.step([action])
-                new_state = info['agent_pos'][agent.agent_number]
+                fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
-                if type(agent).__name__ == "QAgent":
-                    converged = agent.process_reward(
-                        obs, info, reward, old_state, new_state, action)
+                for i in trange(iters):
+                    # Agent takes an action based on the latest observation and info
+                    action = agent.take_action(obs, info)
+                    old_state = info["agent_pos"][agent.agent_number]
 
-                else:
-                    converged = agent.process_reward(
-                        obs, reward, info)
+                    # The action is performed in the environment
+                    obs, reward, terminated, info = env.step([action])
+                    new_state = info["agent_pos"][agent.agent_number]
 
-                # If the agent is terminated, we reset the env.
-                if terminated:
-                    obs, info, world_stats = env.reset()
+                    if type(agent).__name__ == "QAgent":
+                        converged = agent.process_reward(
+                            obs, info, reward, old_state, new_state, action
+                        )
 
-                # Early stopping criterion.
-                if converged:
-                    break
+                    else:
+                        converged = agent.process_reward(obs, reward, info)
 
-            obs, info, world_stats = env.reset()
-            print(world_stats)
+                    # If the agent is terminated, we reset the env.
+                    if terminated:
+                        obs, info, world_stats = env.reset()
 
-            Environment.evaluate_agent(
-                grid, [agent], 1000, out, 0, agent_start_pos=None, custom_file_name=fname+f"-converged-{converged}-n-iters-{i}")
+                    # Early stopping criterion.
+                    if converged:
+                        break
+
+                obs, info, world_stats = env.reset()
+                print(world_stats)
+                if type(agent).__name__ == "MCAgent":
+                    agent.update_policy(optimal=True)
+
+                Environment.evaluate_agent(
+                    grid,
+                    [agent],
+                    1000,
+                    out,
+                    0,
+                    agent_start_pos=None,
+                    custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+                )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_args()
-    main(args.GRID, args.no_gui, args.iter, args.fps, args.sigma, args.out,
-         args.random_seed)
+    main(
+        args.no_gui,
+        args.iter,
+        args.fps,
+        args.out,
+        args.random_seed,
+    )

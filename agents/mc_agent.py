@@ -5,7 +5,15 @@ from copy import deepcopy
 
 
 class MCAgent(BaseAgent):
-    def __init__(self, agent_number, obs: np.ndarray, gamma, epsilon, len_episode, n_times_no_policy_change_for_convergence):
+    def __init__(
+        self,
+        agent_number,
+        obs: np.ndarray,
+        gamma,
+        epsilon,
+        len_episode,
+        n_times_no_policy_change_for_convergence,
+    ):
         """
         Initialize the agent.
 
@@ -32,7 +40,9 @@ class MCAgent(BaseAgent):
         self.max_len_episode = len_episode
         self.gamma = gamma
         self.epsilon = epsilon
-        self.n_times_no_policy_change_for_convergence = n_times_no_policy_change_for_convergence
+        self.n_times_no_policy_change_for_convergence = (
+            n_times_no_policy_change_for_convergence
+        )
         self.times_finished = 0
 
         self.x_size, self.y_size = obs.shape
@@ -44,9 +54,7 @@ class MCAgent(BaseAgent):
         # "n" = the number of times the state was visited
         self.Returns = [
             [
-
                 [{"total": 0, "n": 0} for _ in range(len(self.A))]
-
                 for _ in range(self.y_size)
             ]
             for _ in range(self.x_size)
@@ -135,19 +143,14 @@ class MCAgent(BaseAgent):
         # initially all entries are False. As soon as we see a state action pair, we set the corresponding
         # cell to a dict which keeps track of the discounted reward
         newQ = [
-            [
-                [False for _ in range(len(self.A))]
-                for _ in range(self.y_size)
-            ]
+            [[False for _ in range(len(self.A))] for _ in range(self.y_size)]
             for _ in range(self.x_size)
         ]
 
         # create deque that keeps track of the state action pairs seen in the episode
         state_action_pairs_seen = deque()
 
-        for index, ((currentX, currentY), currentA) in enumerate(
-            self.episode
-        ):
+        for index, ((currentX, currentY), currentA) in enumerate(self.episode):
             currentX, currentY, currentA = (
                 int(currentX),
                 int(currentY),
@@ -173,8 +176,9 @@ class MCAgent(BaseAgent):
 
             # Create dict for this state action pair if is the first time we are seeing it
             # in this episode
-            # means that this is the first time we are seeing this state action pair in this episode
-            if not newQ[currentX][currentY][currentA]:
+            if not newQ[currentX][currentY][
+                currentA
+            ]:  # means that this is the first time we are seeing this state action pair in this episode
                 newQ[currentX][currentY][currentA] = {
                     "discounted_reward": currentReward * self.gamma,
                     "gamma_exponent": 1,
@@ -241,7 +245,12 @@ class MCAgent(BaseAgent):
             else:
                 self.constant_optimal_policy_counter = 0
 
-            output = True if self.constant_optimal_policy_counter >= self.n_times_no_policy_change_for_convergence else False
+            output = (
+                True
+                if self.constant_optimal_policy_counter
+                >= self.n_times_no_policy_change_for_convergence
+                else False
+            )
             return output
 
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
@@ -264,6 +273,6 @@ class MCAgent(BaseAgent):
 
         # Log the state action pair in self.episode
         self.episode.append(((x, y), next_action))
-        #print("action to be taken: ", next_action)
+
         # return the action we take
         return next_action
