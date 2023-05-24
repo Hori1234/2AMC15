@@ -77,11 +77,11 @@ def reward_function(grid: Grid, info: dict) -> float:
     if info['agent_charging'][0] == True:
         return float(10)
     elif info['agent_moved'][0] == False:
-        return float(-100)
+        return float(-5)
     elif sum(info["dirt_cleaned"]) < 1:
         return float(-1)
     else:
-        return float(3)
+        return float(5)
 
 
 def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
@@ -112,7 +112,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                 obs, reward, terminated, info = env.step([action])
                 new_state = info['agent_pos'][agent.agent_number]
 
-                agent.process_reward(
+                converged = agent.process_reward(
                     obs, info, reward, old_state, new_state, action)
 
                 # If the agent is terminated, we reset the env.
@@ -120,7 +120,7 @@ def main(grid_paths: list[Path], no_gui: bool, iters: int, fps: int,
                     obs, info, world_stats = env.reset()
 
                 # Early stopping criterion.
-                if agent.eps == 0:
+                if converged:
                     break
 
             obs, info, world_stats = env.reset()

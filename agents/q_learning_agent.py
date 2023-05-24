@@ -26,6 +26,16 @@ class QAgent(BaseAgent):
         self.tile_state = []
 
     def process_reward(self, observation: np.ndarray, info: None | dict, reward: float, old_state: tuple, new_state: tuple, action: int):
+        """_summary_
+
+        Args:
+            observation (np.ndarray): _description_
+            info (None | dict): _description_
+
+        Returns:
+            int: _description_
+        """
+
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
 
@@ -61,7 +71,22 @@ class QAgent(BaseAgent):
         # Update the Q table
         self.updateQ(old_state, new_state, action, reward)
 
+        # Return true if the agent should stop learning. When epsilon equals zero the agent is terminated.
+        if self.eps == 0:
+            return True
+        else:
+            return False
+
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
+        """_summary_
+
+        Args:
+            observation (np.ndarray): _description_
+            info (None | dict): _description_
+
+        Returns:
+            int: _description_
+        """
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
 
@@ -90,6 +115,16 @@ class QAgent(BaseAgent):
 
 
     def updateShapeQ(self, x, y, old_tile_state):
+        """_summary_
+
+        Args:
+            x (_type_): _description_
+            y (_type_): _description_
+            old_tile_state (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         # Add the new found dirty tile to the list.
         self.dirty_tiles += [(x, y)]
         # Update the tile state by adding a 0. The 0 is added because the current tile was dirty but not anymore as the robot is here currently.
