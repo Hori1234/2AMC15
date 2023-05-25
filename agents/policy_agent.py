@@ -47,19 +47,12 @@ class Policy_iteration(ABC):
         a = self.prev_move
         self.rewards[s, a] = reward
         self.policy = self.Policy_iteration()
-        if (reward == 10) & (self.explore):
-            self.explore = False
-            self.charging = info['agent_pos'][0]
+        if reward == 10:
+            self.dirty_tiles = []
+            if self.explore:
+                self.explore = False
+                self.charging = info['agent_pos'][0]
         return False
-    def next_state(self, s:tuple,a:int):
-        x = s[0]
-        y = s[1]
-        next_xy = {1: (x, y - 1), 0: (x, y + 1), 2: (x - 1, y), 3: (x + 1, y), 4: (x, y)}
-        new_s = next_xy[a]
-        if (0 < new_s[0] < len(self.obs)) & (0 < new_s[1] < len(self.obs[0])):
-            return new_s
-        else:
-            return s
     def Policy_iteration(self):
         """"Possible actions:
             - 0: Move down
@@ -77,8 +70,6 @@ class Policy_iteration(ABC):
         """
 
         it = 0
-        # Initialize actions randomly
-
         while True:
             old_policy = self.policy.copy()
             self.V = self.policy_evaluation()
@@ -90,22 +81,25 @@ class Policy_iteration(ABC):
         return self.policy
 
     def policy_evaluation(self, theta = 0.5):
-        #self.V = {s: 0 for s in self.states}
         max_it = 0
         delta = 0
         while True:
             oldV = self.V.copy()
             for s in self.states:
                 a = self.policy[s]
-                if self.next_states_dict[s, a] in self.dirty_tiles:
+                s_next = self.next_states_dict[s, a]
+                if s_next in self.dirty_tiles:
                     addition = -1
-                elif (self.next_states_dict[s, a] == self.charging) & (len(self.dirty_tiles) != self.n_dirts):
+                elif (s_next == self.charging) & (len(self.dirty_tiles) != self.n_dirts):
                     addition = -5
-                elif (self.next_states_dict[s, a] == self.charging) & (len(self.dirty_tiles) == self.n_dirts):
+                elif (s_next == self.charging) & (len(self.dirty_tiles) == self.n_dirts):
                     addition = 10
                 else:
                     addition = self.rewards[s, a]
-                self.V[s] = addition + self.gamma * oldV[self.next_states_dict[s, a]]
+                if addition == -5:
+                    self.V[s] = addition
+                else:
+                    self.V[s] = addition + self.gamma *  oldV[s_next]
 
                 delta = max(delta, np.abs(self.V[s] - oldV[s]))
 
@@ -127,25 +121,23 @@ class Policy_iteration(ABC):
         for s in self.states:
             Q = {}
             for a in self.actions:
-                if self.next_states_dict[s, a] in self.dirty_tiles:
+                s_next = self.next_states_dict[s, a]
+                if s_next in self.dirty_tiles:
                     addition = -1
-                elif (self.next_states_dict[s, a] == self.charging) & (len(self.dirty_tiles) != self.n_dirts):
+                elif (s_next == self.charging) & (len(self.dirty_tiles) != self.n_dirts):
                     addition = -5
-                elif (self.next_states_dict[s, a] == self.charging) & (len(self.dirty_tiles) == self.n_dirts):
+                elif (s_next == self.charging) & (len(self.dirty_tiles) == self.n_dirts):
                     addition = 10
                 else:
                     addition = self.rewards[s, a]
-                s_next = self.next_states_dict[s, a]
-                Q[a] = addition + self.gamma*self.V[s_next]
-
-            # max_value = max(Q.values())
-            # max_keys = [k for k, v in Q.items() if v == max_value]
-            # policy[s] = np.random.choice(max_keys)
+                if addition == -5:
+                    Q[a] = addition
+                else:
+                    Q[a] = addition + self.gamma * self.V[s_next]
 
             self.policy[s] = max(Q, key=Q.get)
         return self.policy
 
-    # @abstractmethod
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
         """Any code that does the action should be included here.
 
