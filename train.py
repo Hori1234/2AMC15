@@ -21,11 +21,9 @@ try:
     from world.grid import Grid
 
     # Add your agents here
-    from agents.null_agent import NullAgent
-    from agents.greedy_agent import GreedyAgent
-    from agents.random_agent import RandomAgent
     from agents.q_learning_agent import QAgent
     from agents.mc_agent import MCAgent
+    from agents.policy_agent import Policy_iteration
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -41,9 +39,7 @@ except ModuleNotFoundError:
     from world import Environment
 
     # Add your agents here
-    from agents.null_agent import NullAgent
-    from agents.greedy_agent import GreedyAgent
-    from agents.random_agent import RandomAgent
+    from agents.policy_agent import Policy_iteration
     from agents.q_learning_agent import QAgent
     from agents.mc_agent import MCAgent
 
@@ -151,8 +147,14 @@ def main(
                     len_episode=100,
                     n_times_no_policy_change_for_convergence=100,
                 ),
-                # TODO: add agent from Casper/Stan with gamma=0.6
-                # TODO: add agent from Casper/Stan with gamma=0.9
+                Policy_iteration(
+                    0,
+                    gamma=0.6,
+                ),
+                Policy_iteration(
+                    0,
+                    gamma=0.9,
+                ),
             ]
 
             # Iterate through each agent for `iters` iterations
@@ -163,7 +165,12 @@ def main(
                 ):
                     continue
 
+                if type(agent).__name__ == "Policy_iteration":
+                    iters = 1000
+
                 fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
+
+                print("Agent is ", type(agent).__name__, " gamma is ", agent.gamma)
 
                 for i in trange(iters):
                     # Agent takes an action based on the latest observation and info
@@ -185,6 +192,8 @@ def main(
                     # If the agent is terminated, we reset the env.
                     if terminated:
                         obs, info, world_stats = env.reset()
+                        if type(agent).__name__ == "Policy_iteration":
+                            agent.dirty_tiles = []
 
                     # Early stopping criterion.
                     if converged:
@@ -192,15 +201,19 @@ def main(
 
                 obs, info, world_stats = env.reset()
                 print(world_stats)
+
                 if type(agent).__name__ == "MCAgent":
                     agent.update_policy(optimal=True)
+
+                if type(agent).__name__ == "Policy_iteration":
+                    agent.dirty_tiles = []
 
                 Environment.evaluate_agent(
                     grid,
                     [agent],
                     1000,
                     out,
-                    0,
+                    sigma,
                     agent_start_pos=[(1, 1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
