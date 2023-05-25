@@ -131,6 +131,7 @@ def main(
                 no_gui,
                 n_agents=1,
                 agent_start_pos=[(1,1)],
+                sigma=0,
                 target_fps=fps,
                 random_seed=random_seed,
                 reward_fn=reward_function,
@@ -198,6 +199,8 @@ def main(
                     # If the agent is terminated, we reset the env.
                     if terminated:
                         obs, info, world_stats = env.reset()
+                        if type(agent).__name__ == "Policy_iteration":
+                            agent.dirty_tiles = []
                     # Early stopping criterion.
                     if converged:
                         break
@@ -213,8 +216,8 @@ def main(
                     [agent],
                     1000,
                     out,
-                    0,
-                    agent_start_pos=[(1,1)],
+                    sigma,
+                    agent_start_pos=[(1, 1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
 
