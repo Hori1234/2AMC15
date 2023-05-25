@@ -130,8 +130,9 @@ def main(
                 grid,
                 no_gui,
                 n_agents=1,
-                agent_start_pos=[(1,1)],
+                agent_start_pos=[(1, 1)],
                 target_fps=fps,
+                sigma=sigma,
                 random_seed=random_seed,
                 reward_fn=reward_function,
             )
@@ -213,7 +214,7 @@ def main(
                     [agent],
                     1000,
                     out,
-                    0,
+                    sigma,
                     agent_start_pos=[(1,1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
