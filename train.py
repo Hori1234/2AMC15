@@ -124,7 +124,7 @@ def main(
                 n_agents=1,
                 agent_start_pos=[(1, 1)],
                 target_fps=fps,
-                sigma=sigma,
+                sigma=0,
                 random_seed=random_seed,
                 reward_fn=reward_function,
             )
@@ -167,9 +167,7 @@ def main(
                     grid == Path("grid_configs/simple1.grd")
                 ):
                     continue
-
-                if type(agent).__name__ == "Policy_iteration":
-                    iters = 1000
+                
 
                 fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
@@ -200,6 +198,9 @@ def main(
 
                     # Early stopping criterion.
                     if converged:
+                        break
+
+                    if type(agent).__name__ == "Policy_iteration" and i == 1000:
                         break
 
                 obs, info, world_stats = env.reset()
