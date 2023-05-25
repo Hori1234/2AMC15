@@ -123,7 +123,7 @@ class MCAgent(BaseAgent):
             # reset episode for next iteration
             self.reset_episode()
 
-            return self.check_convergence()
+            return self.check_convergence(reward == 10)
 
         return False  # in order to always return something, not only after checking convergence
 
@@ -232,9 +232,19 @@ class MCAgent(BaseAgent):
                 self.policy[x, y] = action
                 self.optimal_policy[x, y] = max_key
 
-    def check_convergence(self):
+    def check_convergence(self, last_route_succesful):
         """
-        Check if the policy has converged. This is done by comparing the current policy
+        Check if the policy has converged. This is done by comparing the current optimal policy to the
+        previous optimal policy. Also, we check if this function is called after succesfully reaching
+        the charging station. This is needed in order to allow convergence. If the agent has not reached
+        the charging station, the policy might have stayed the same because the agent has not learned the
+        right policy yet, but did not find an improvement either.
+
+        Parameters
+        ----------
+        last_route_succesful : bool
+            Checks if this function is called after succesfully reaching the charging station.
+
         """
         # only check for convergence after the end is reached a number of times
         # this prevents the agent from converging too early, as it might not have
@@ -249,6 +259,7 @@ class MCAgent(BaseAgent):
                 True
                 if self.constant_optimal_policy_counter
                 >= self.n_times_no_policy_change_for_convergence
+                and last_route_succesful
                 else False
             )
             return output
@@ -263,7 +274,6 @@ class MCAgent(BaseAgent):
             info (None | dict): The info dict of the environment.
 
         """
-
         # Get the x,y values of the state
         x, y = info["agent_pos"][self.agent_number]
         x, y = int(x), int(y)
