@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 25 14:50:03 2023
+
+@author: 20183067
+"""
 """Train.
 
 Train your RL Agent in this file.
@@ -12,8 +18,7 @@ from pathlib import Path
 from tqdm import trange
 import time
 
-# This value of sigma will be used for both grids
-# The other sigma
+# or maybe we want to keep gamma constant?
 TWO_EXPERIMENTS_SIGMA = 0
 
 try:
@@ -26,6 +31,7 @@ try:
     from agents.random_agent import RandomAgent
     from agents.q_learning_agent import QAgent
     from agents.mc_agent import MCAgent
+    from agents.policy_agent import Policy_iteration
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -46,6 +52,7 @@ except ModuleNotFoundError:
     from agents.random_agent import RandomAgent
     from agents.q_learning_agent import QAgent
     from agents.mc_agent import MCAgent
+    from agents.policy_agent import Policy_iteration
 
 
 def parse_args():
@@ -123,9 +130,8 @@ def main(
                 grid,
                 no_gui,
                 n_agents=1,
-                agent_start_pos=[(1, 1)],
+                agent_start_pos=[(1,1)],
                 target_fps=fps,
-                sigma=sigma,
                 random_seed=random_seed,
                 reward_fn=reward_function,
             )
@@ -151,8 +157,12 @@ def main(
                     len_episode=100,
                     n_times_no_policy_change_for_convergence=100,
                 ),
-                # TODO: add agent from Casper/Stan with gamma=0.6
-                # TODO: add agent from Casper/Stan with gamma=0.9
+                Policy_iteration(0,
+                                 gamma=0.6,
+                                 ),
+                Policy_iteration(0,
+                                 gamma=0.9,
+                                 )
             ]
 
             # Iterate through each agent for `iters` iterations
@@ -162,7 +172,10 @@ def main(
                     grid == Path("grid_configs/simple1.grd")
                 ):
                     continue
-
+                if type(agent).__name__ == "Policy_iteration":
+                    iters = 1000
+                else:
+                    iters = 100000
                 fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
                 for i in trange(iters):
@@ -185,7 +198,6 @@ def main(
                     # If the agent is terminated, we reset the env.
                     if terminated:
                         obs, info, world_stats = env.reset()
-
                     # Early stopping criterion.
                     if converged:
                         break
@@ -194,14 +206,15 @@ def main(
                 print(world_stats)
                 if type(agent).__name__ == "MCAgent":
                     agent.update_policy(optimal=True)
-
+                if type(agent).__name__ == "Policy_iteration":
+                    agent.dirty_tiles = []
                 Environment.evaluate_agent(
                     grid,
                     [agent],
                     1000,
                     out,
                     0,
-                    agent_start_pos=[(1, 1)],
+                    agent_start_pos=[(1,1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
 
