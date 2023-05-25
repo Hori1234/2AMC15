@@ -75,7 +75,10 @@ def parse_args():
 
 
 def reward_function(grid: Grid, info: dict) -> float:
-    """This is the default reward function.
+    """Custom reward function. Punish the agent most for staying at the same
+    location. Punish a bit less for moving without cleaning. Reward for cleaning
+    dirt and reward the most for going back to the charging station when all dirt
+    is gone.
 
     Args:
         grid: The grid the agent is moving on, in case that is needed by
