@@ -10,7 +10,7 @@ from copy import copy
 
 class QAgent(BaseAgent):
     def __init__(self, agent_number, learning_rate=0.2, gamma=0.99, epsilon_decay=0.01, epsilon_step_increment=0.0001):
-        """Chooses an action randomly unless there is something neighboring.
+        """Chooses an action based on learned q learning policy.
 
         Args:
             agent_number: The index of the agent in the environment.
@@ -26,14 +26,19 @@ class QAgent(BaseAgent):
         self.tile_state = []
 
     def process_reward(self, observation: np.ndarray, info: None | dict, reward: float, old_state: tuple, new_state: tuple, action: int):
-        """_summary_
+        """This function updates the q table based on the obtained reward and the taken action from the previous state to the current state.
+        It also return whether or not the agent is done learning.
 
         Args:
-            observation (np.ndarray): _description_
-            info (None | dict): _description_
+            observation (np.ndarray): The grid observation.
+            info (None | dict): The information about the current state.
+            reward (float): The obtained reward.
+            old_state (np.ndarray): The previous position of the agent.
+            new_state (np.ndarray): The current position of the agent.
+            action (int): The action taken from the previous position of the agent to reach the current position of the agent.
 
         Returns:
-            int: _description_
+            bool: Return True if the agent is done learning.
         """
 
         # Get the agents position.
@@ -78,14 +83,14 @@ class QAgent(BaseAgent):
             return False
 
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
-        """_summary_
+        """This function returns which action to take based on the Q table and some randomness.
 
         Args:
-            observation (np.ndarray): _description_
-            info (None | dict): _description_
+            observation (np.ndarray): The grid observation.
+            info (None | dict): The information about the current state.
 
         Returns:
-            int: _description_
+            int: The action to be taken from the current state.
         """
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
@@ -118,12 +123,12 @@ class QAgent(BaseAgent):
         """_summary_
 
         Args:
-            x (_type_): _description_
-            y (_type_): _description_
-            old_tile_state (_type_): _description_
+            x (int): The x coordinate of the agent.
+            y (int): The y coordinate of the agent.
+            old_tile_state (list): A binary list of which dirty tiles have and have not been cleaned yet.
 
         Returns:
-            _type_: _description_
+            list: The binary list of the previous tile state.
         """
         # Add the new found dirty tile to the list.
         self.dirty_tiles += [(x, y)]
@@ -136,6 +141,15 @@ class QAgent(BaseAgent):
         return old_tile_state
 
     def updateQ(self, old_state, new_state, action, reward):
+        """This function updates the q table based on the obtained reward and the taken action from the previous state to the current state.
+        It also return whether or not the agent is done learning.
+
+        Args:
+            new_state (np.ndarray): The current position of the agent.
+            action (int): The action taken from the previous position of the agent to reach the current position of the agent.
+            reward (float): The obtained reward.
+        """
+
         # Update the Q table using the Bellman equation.
         self.q_table[old_state][action] = (1-self.lr)*self.q_table[old_state][action] + self.lr * (
             reward + self.gamma*np.max(self.q_table[new_state]))
