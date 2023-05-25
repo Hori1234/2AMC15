@@ -125,6 +125,7 @@ def main(
                 n_agents=1,
                 agent_start_pos=[(1, 1)],
                 target_fps=fps,
+                sigma=sigma,
                 random_seed=random_seed,
                 reward_fn=reward_function,
             )
