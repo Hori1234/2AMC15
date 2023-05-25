@@ -12,8 +12,8 @@ from pathlib import Path
 from tqdm import trange
 import time
 
-# TODO: Choose the value for sigma we want to use for the simple grid
-# or maybe we want to keep gamma constant?
+# This value of sigma will be used for both grids
+# The other sigma
 TWO_EXPERIMENTS_SIGMA = 0
 
 try:
@@ -200,7 +200,7 @@ def main(
                     1000,
                     out,
                     0,
-                    agent_start_pos=None,
+                    agent_start_pos=[(1, 1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
 
