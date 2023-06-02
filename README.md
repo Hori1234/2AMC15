@@ -37,3 +37,7 @@ options:
 - flask ~= 2.2
 - flask-socketio ~= 5.3
 - pillow ~= 9.4
+
+## Reproducibility
+Run the following command in the command-line to reproduce the results.
+$ python train.py --iter 500000 --no_gui
