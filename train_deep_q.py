@@ -12,10 +12,6 @@ from pathlib import Path
 from tqdm import trange
 import time
 
-# This value of sigma will be used for both grids
-# The other sigma
-TWO_EXPERIMENTS_SIGMA = 0
-
 try:
     from world import Environment
     from world.grid import Grid
@@ -37,9 +33,7 @@ except ModuleNotFoundError:
     from world import Environment
 
     # Add your agents here
-    from agents.policy_agent import Policy_iteration
-    from agents.q_learning_agent import QAgent
-    from agents.mc_agent import MCAgent
+    from agents.deep_q_agent import DeepQAgent
 
 
 def parse_args():
@@ -109,10 +103,10 @@ def main(
     # add two grid paths we'll use for evaluating
     grid_paths = [
         Path("grid_configs/20-10-grid.grd"),
-        Path("grid_configs/rooms-1.grd"),
-        Path("grid_configs/maze-1.grd"),
-        Path("grid_configs/walldirt-1.grd"),
-        Path("grid_configs/walldirt-2.grd"),
+        # Path("grid_configs/rooms-1.grd"),
+        # Path("grid_configs/maze-1.grd"),
+        # Path("grid_configs/walldirt-1.grd"),
+        # Path("grid_configs/walldirt-2.grd"),
     ]
 
     for grid in grid_paths:
@@ -131,7 +125,7 @@ def main(
 
         # add all agents to test
         agents = [
-            DeepQAgent(agent_number=0, learning_rate=0.01, gamma=0.8, epsilon_decay=0.01, memory_size=1000, batch_size=500, tau=0.01),
+            DeepQAgent(agent_number=0, learning_rate=0.01, gamma=0.95, epsilon_decay=0.001, memory_size=1000, batch_size=100, tau=0.05),
         ]
 
         # Iterate through each agent for `iters` iterations
