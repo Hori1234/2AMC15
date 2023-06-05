@@ -15,12 +15,10 @@ import torch.nn.functional as F
 # if GPU is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
+Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
 
 class ReplayMemory(object):
-
     def __init__(self, capacity):
         self.memory = deque([], maxlen=capacity)
 
@@ -34,8 +32,8 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-class DQN(nn.Module):
 
+class DQN(nn.Module):
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 80)
@@ -52,8 +50,6 @@ class DQN(nn.Module):
         return self.layer3(x)
 
 
-
-
 """Null Agent.
 
 An agent which does nothing.
@@ -64,7 +60,16 @@ from agents import BaseAgent
 
 
 class DeepQAgent(BaseAgent):
-    def __init__(self, agent_number, learning_rate=0.01, gamma=0.95, epsilon_decay=0.01, memory_size=1000, batch_size=100, tau=0.05):
+    def __init__(
+        self,
+        agent_number,
+        learning_rate=0.01,
+        gamma=0.95,
+        epsilon_decay=0.01,
+        memory_size=1000,
+        batch_size=100,
+        tau=0.05,
+    ):
         """Chooses an action based on learned q learning policy.
 
         Args:
@@ -92,9 +97,19 @@ class DeepQAgent(BaseAgent):
         # Copy the weights of the policy network to the target network.
         self.target_net.load_state_dict(self.policy_net.state_dict())
         # Initialize the optimizer.
-        self.optimizer = optim.AdamW(self.policy_net.parameters(), lr=self.lr, amsgrad=True)
+        self.optimizer = optim.AdamW(
+            self.policy_net.parameters(), lr=self.lr, amsgrad=True
+        )
 
-    def process_reward(self, observation: np.ndarray, info: None | dict, reward: float, old_state: tuple, new_state: tuple, action: int):
+    def process_reward(
+        self,
+        observation: np.ndarray,
+        info: None | dict,
+        reward: float,
+        old_state: tuple,
+        new_state: tuple,
+        action: int,
+    ):
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
 
@@ -115,10 +130,14 @@ class DeepQAgent(BaseAgent):
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[old_state[0], old_state[1]] = 1
             old_state = list(clear_state.flatten()) + old_tile_state
-            
+
             # Turn the variables into tensors for the neural network.
-            old_state = torch.tensor(old_state, dtype=torch.float32, device=device).unsqueeze(0)
-            new_state = torch.tensor(new_state, dtype=torch.float32, device=device).unsqueeze(0)
+            old_state = torch.tensor(
+                old_state, dtype=torch.float32, device=device
+            ).unsqueeze(0)
+            new_state = torch.tensor(
+                new_state, dtype=torch.float32, device=device
+            ).unsqueeze(0)
             reward = torch.tensor([reward], device=device)
             action = torch.tensor([[action]], device=device, dtype=torch.long)
 
@@ -128,14 +147,14 @@ class DeepQAgent(BaseAgent):
             # Optimize the model.
             self.optimize_model()
 
-        if info['agent_charging'][self.agent_number] == True:
+        if info["agent_charging"][self.agent_number] == True:
             # If the agent is charging, the episode has ended and update the epsilon value for the subsequent episode.
             self.eps = max(0, self.eps - self.ed)
             # Also, all the dirty tiles are reset so the tile state should only contain 1's.
             self.tile_state = [1 for i in range(len(self.tile_state))]
             if self.first_run:
                 # If this was the first run, determine the size of the input layer of the neural network.
-                state_space = self.w*self.h+len(self.tile_state)
+                state_space = self.w * self.h + len(self.tile_state)
                 # state_space = 2+len(self.tile_state)
                 # Initialize the neural network.
                 self.initialize_network(state_space, 4)
@@ -213,10 +232,14 @@ class DeepQAgent(BaseAgent):
 
         # Compute a mask of non-final states and concatenate the batch elements
         # (a final state would've been the one after which simulation ended)
-        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                            batch.next_state)), device=device, dtype=torch.bool)
-        non_final_next_states = torch.cat([s for s in batch.next_state
-                                                    if s is not None])
+        non_final_mask = torch.tensor(
+            tuple(map(lambda s: s is not None, batch.next_state)),
+            device=device,
+            dtype=torch.bool,
+        )
+        non_final_next_states = torch.cat(
+            [s for s in batch.next_state if s is not None]
+        )
         state_batch = torch.cat(batch.state)
         action_batch = torch.cat(batch.action)
         reward_batch = torch.cat(batch.reward)
@@ -233,7 +256,9 @@ class DeepQAgent(BaseAgent):
         # state value or 0 in case the state was final.
         next_state_values = torch.zeros(self.batch_size, device=device)
         with torch.no_grad():
-            next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1)[0]
+            next_state_values[non_final_mask] = self.target_net(
+                non_final_next_states
+            ).max(1)[0]
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * self.gamma) + reward_batch
 
@@ -252,5 +277,7 @@ class DeepQAgent(BaseAgent):
         target_net_state_dict = self.target_net.state_dict()
         policy_net_state_dict = self.policy_net.state_dict()
         for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key]*self.tau + target_net_state_dict[key]*(1-self.tau)
+            target_net_state_dict[key] = policy_net_state_dict[
+                key
+            ] * self.tau + target_net_state_dict[key] * (1 - self.tau)
         self.target_net.load_state_dict(target_net_state_dict)
