@@ -121,7 +121,7 @@ def main(
     ]
 
     # needed for the DDQN Agent
-    batch_size = 32  # Define the batch size
+    batch_size = 36  # Define the batch size
     target_update_freq = 10  # Define the target update frequency
     # test for 2 different sigma values
     for sigma in [0, 0.4]:
@@ -143,9 +143,9 @@ def main(
             agents = [
                 DDQNAgent(
                     0,
-                    state_size=obs.shape()[0] * obs.shape()[1],
+                    state_size=obs.shape[0] * obs.shape[1],
                     action_size=4,
-                    hidden_size=32,
+                    hidden_size=64,
                     learning_rate=0.001,
                     gamma=0.99,
                     epsilon=1.0,
@@ -167,12 +167,14 @@ def main(
 
                 for i in trange(iters):
                     # Agent takes an action based on the latest observation and info
+                    # old_state = info["agent_pos"][agent.agent_number]
+                    old_state = obs.flatten()
                     action = agent.take_action(obs, info)
-                    old_state = info["agent_pos"][agent.agent_number]
 
                     # The action is performed in the environment
                     obs, reward, terminated, info = env.step([action])
-                    new_state = info["agent_pos"][agent.agent_number]
+                    # new_state = info["agent_pos"][agent.agent_number]
+                    new_state = obs.flatten()
 
                     if type(agent).__name__ == "DDQNAgent":
                         # check if teh algorithm converged

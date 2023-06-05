@@ -57,13 +57,11 @@ class DDQNAgent:
         self.memory = []
 
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
-        state = info["agent_pos"][self.agent_number]
+        state = observation
         if np.random.rand() <= self.epsilon:
             return np.random.choice(self.action_size)
         else:
-            state = (
-                torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
-            )
+            state = torch.tensor(state, dtype=torch.float32).flatten().to(self.device)
             with torch.no_grad():
                 q_values = self.q_network(state)
             return torch.argmax(q_values).item()
@@ -79,6 +77,7 @@ class DDQNAgent:
         done: bool,
     ):
         self.memory.append((old_state, action, reward, next_state, done))
+
         if self.epsilon == 0:
             return True
         else:
@@ -90,6 +89,7 @@ class DDQNAgent:
 
         indices = np.random.choice(len(self.memory), batch_size, replace=False)
         batch = np.array(self.memory)[indices]
+
         states, actions, rewards, next_states, dones = zip(*batch)
 
         states = torch.tensor(states, dtype=torch.float32).to(self.device)
@@ -99,6 +99,8 @@ class DDQNAgent:
         )
         next_states = torch.tensor(next_states, dtype=torch.float32).to(self.device)
         dones = torch.tensor(dones, dtype=torch.float32).unsqueeze(1).to(self.device)
+
+        # print(states.shape, actions.shape, rewards.shape, next_states.shape)
 
         q_values = self.q_network(states).gather(1, actions)
         next_q_values = self.target_network(next_states).detach()
