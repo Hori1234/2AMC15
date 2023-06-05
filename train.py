@@ -143,7 +143,7 @@ def main(
             agents = [
                 DDQNAgent(
                     0,
-                    state_size=2,
+                    state_size=obs.shape()[0] * obs.shape()[1],
                     action_size=4,
                     hidden_size=32,
                     learning_rate=0.001,
