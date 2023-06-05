@@ -30,6 +30,7 @@ try:
     from agents.greedy_agent import GreedyAgent
     from agents.random_agent import RandomAgent
     from agents.q_learning_agent import QAgent
+    from agents.ddqn import DDQNAgent
     from agents.mc_agent import MCAgent
     from agents.policy_agent import Policy_iteration
 except ModuleNotFoundError:
@@ -47,11 +48,8 @@ except ModuleNotFoundError:
     from world import Environment
 
     # Add your agents here
-    from agents.null_agent import NullAgent
-    from agents.greedy_agent import GreedyAgent
-    from agents.random_agent import RandomAgent
-    from agents.q_learning_agent import QAgent
-    from agents.mc_agent import MCAgent
+    from agents.ddqn import DDQNAgent
+
     from agents.policy_agent import Policy_iteration
 
 
@@ -122,6 +120,9 @@ def main(
         Path("grid_configs/20-10-grid.grd"),
     ]
 
+    # needed for the DDQN Agent
+    batch_size = 32  # Define the batch size
+    target_update_freq = 10  # Define the target update frequency
     # test for 2 different sigma values
     for sigma in [0, 0.4]:
         for grid in grid_paths:
@@ -130,7 +131,7 @@ def main(
                 grid,
                 no_gui,
                 n_agents=1,
-                agent_start_pos=[(1,1)],
+                agent_start_pos=[(1, 1)],
                 sigma=0,
                 target_fps=fps,
                 random_seed=random_seed,
@@ -140,30 +141,15 @@ def main(
 
             # add all agents to test
             agents = [
-                QAgent(0, learning_rate=1, gamma=0.6, epsilon_decay=0.001),
-                QAgent(0, learning_rate=1, gamma=0.9, epsilon_decay=0.001),
-                MCAgent(
+                DDQNAgent(
                     0,
-                    obs,
-                    gamma=0.6,
-                    epsilon=0.1,
-                    len_episode=100,
-                    n_times_no_policy_change_for_convergence=100,
-                ),
-                MCAgent(
-                    0,
-                    obs,
-                    gamma=0.9,
-                    epsilon=0.1,
-                    len_episode=100,
-                    n_times_no_policy_change_for_convergence=100,
-                ),
-                Policy_iteration(0,
-                                 gamma=0.6,
-                                 ),
-                Policy_iteration(0,
-                                 gamma=0.9,
-                                 )
+                    state_size=2,
+                    action_size=4,
+                    hidden_size=32,
+                    learning_rate=0.001,
+                    gamma=0.99,
+                    epsilon=1.0,
+                )
             ]
 
             # Iterate through each agent for `iters` iterations
@@ -175,8 +161,8 @@ def main(
                     continue
                 if type(agent).__name__ == "Policy_iteration":
                     iters = 1000
-                else:
-                    iters = 100000
+                # else:
+                #     iters = 10
                 fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
                 for i in trange(iters):
@@ -188,11 +174,19 @@ def main(
                     obs, reward, terminated, info = env.step([action])
                     new_state = info["agent_pos"][agent.agent_number]
 
-                    if type(agent).__name__ == "QAgent":
+                    if type(agent).__name__ == "DDQNAgent":
+                        # check if teh algorithm converged
                         converged = agent.process_reward(
-                            obs, info, reward, old_state, new_state, action
+                            obs, info, reward, old_state, new_state, action, terminated
                         )
-
+                        # perform a replay step
+                        agent.replay(batch_size)
+                        # Update the target network periodically
+                        if i % target_update_freq == 0:
+                            # print("Target Network Updated")
+                            agent.update_target_network()
+                        # decay the value of epsioone
+                        agent.decay_epsilon(i)
                     else:
                         converged = agent.process_reward(obs, reward, info)
 
