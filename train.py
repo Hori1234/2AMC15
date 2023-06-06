@@ -18,6 +18,7 @@ import numpy as np
 TWO_EXPERIMENTS_SIGMA = 0
 
 try:
+    from world import EnvironmentBattery
     from world import Environment
     from world.grid import Grid
 
@@ -37,6 +38,7 @@ except ModuleNotFoundError:
     if root_path not in sys.path:
         sys.path.extend(root_path)
 
+    from world import EnvironmentBattery
     from world import Environment
 
     # Add your agents here
@@ -79,6 +81,10 @@ def parse_args():
         help="Number of actions the agent can take before it needs to recharge.",
     )
 
+    p.add_argument(
+        "--no_battery", action="store_true", help="Disables the battery feature."
+    )
+
     return p.parse_args()
 
 
@@ -108,7 +114,13 @@ def reward_function(grid: Grid, info: dict) -> float:
 
 
 def main(
-    no_gui: bool, iters: int, fps: int, out: Path, random_seed: int, battery_size: int
+    no_gui: bool,
+    iters: int,
+    fps: int,
+    out: Path,
+    random_seed: int,
+    battery_size: int,
+    no_battery: bool,
 ):
     """Main loop of the program."""
 
@@ -122,17 +134,31 @@ def main(
     for sigma in [0, 0.4]:
         for grid in grid_paths:
             # Set up the environment and reset it to its initial state
-            env = Environment(
-                grid,
-                battery_size=battery_size,
-                no_gui=no_gui,
-                n_agents=1,
-                agent_start_pos=[(1, 1)],
-                target_fps=fps,
-                sigma=0,
-                random_seed=random_seed,
-                reward_fn=reward_function,
+            env = (
+                EnvironmentBattery(
+                    grid,
+                    battery_size=battery_size,
+                    no_gui=no_gui,
+                    n_agents=1,
+                    agent_start_pos=[(1, 1)],
+                    target_fps=fps,
+                    sigma=0,
+                    random_seed=random_seed,
+                    reward_fn=reward_function,
+                )
+                if not no_battery
+                else Environment(
+                    grid,
+                    no_gui=no_gui,
+                    n_agents=1,
+                    agent_start_pos=[(1, 1)],
+                    target_fps=fps,
+                    sigma=0,
+                    random_seed=random_seed,
+                    reward_fn=reward_function,
+                )
             )
+
             obs, info = env.get_observation()
 
             charger_loc = np.where(obs == 4)
@@ -218,7 +244,7 @@ def main(
                 if type(agent).__name__ == "Policy_iteration":
                     agent.dirty_tiles = []
 
-                Environment.evaluate_agent(
+                EnvironmentBattery.evaluate_agent(
                     grid,
                     [agent],
                     1000,
@@ -227,11 +253,25 @@ def main(
                     agent_start_pos=[(1, 1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                     battery_size=battery_size,
+                ) if not no_battery else Environment.evaluate_agent(
+                    grid,
+                    [agent],
+                    1000,
+                    out,
+                    sigma,
+                    agent_start_pos=[(1, 1)],
+                    custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
 
 
 if __name__ == "__main__":
     args = parse_args()
     main(
-        args.no_gui, args.iter, args.fps, args.out, args.random_seed, args.battery_size
+        args.no_gui,
+        args.iter,
+        args.fps,
+        args.out,
+        args.random_seed,
+        args.battery_size,
+        args.no_battery,
     )

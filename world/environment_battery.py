@@ -40,7 +40,7 @@ except ModuleNotFoundError:
     from world.path_visualizer import visualize_path
 
 
-class Environment:
+class EnvironmentBattery:
     def __init__(
         self,
         grid_fp: Path,
@@ -51,6 +51,7 @@ class Environment:
         reward_fn: callable = None,
         target_fps: int = 30,
         random_seed: int | float | str | bytes | bytearray | None = 0,
+        battery_size: int = 1000,
     ):
         """Creates the grid environment for the robot vacuum.
 
@@ -105,6 +106,10 @@ class Environment:
         self.agent_pos = None  # Current agent positions
         self.agent_start_pos = agent_start_pos  # Where agents initially start
         self.agent_done = [False] * n_agents
+
+        # Initialize battery
+        self.battery_size = battery_size
+        self.battery_left = battery_size
 
         # Set up reward function
         if reward_fn is None:
@@ -258,6 +263,7 @@ class Environment:
         self._initialize_agent_pos()
         self.info = self._reset_info()
         self.world_stats = self._reset_world_stats()
+        self.battery_left = self.battery_size
         if not self.no_gui:
             self.gui = EnvironmentGUI(self.grid.cells.shape)
             self.gui.reset()
@@ -397,11 +403,9 @@ class Environment:
                         min(max_y, self.agent_pos[i][1] + 1),
                     )
                 case 1:  # Move up
-                    new_pos = (self.agent_pos[i][0], max(
-                        0, self.agent_pos[i][1] - 1))
+                    new_pos = (self.agent_pos[i][0], max(0, self.agent_pos[i][1] - 1))
                 case 2:  # Move left
-                    new_pos = (
-                        max(0, self.agent_pos[i][0] - 1), self.agent_pos[i][1])
+                    new_pos = (max(0, self.agent_pos[i][0] - 1), self.agent_pos[i][1])
                 case 3:  # Move right
                     new_pos = (
                         min(max_x, self.agent_pos[i][0] + 1),
@@ -414,7 +418,22 @@ class Environment:
                         f"Provided action {action} for agent {i} "
                         f"is not one of the possible actions."
                     )
-            self._move_agent(new_pos, i)
+
+            if self.battery_left > 0:
+                self._move_agent(new_pos, i)
+                self.battery_left -= 1
+
+            else:  # Battery is empty
+                warn("Battery is empty. The agent cannot move anymore.")
+                self.info["agent_moved"][i] = False
+                self.world_stats["total_failed_moves"] += 1
+
+            # I feel like we would want to know the state of the
+            # battery both while running around on the grid,
+            # hence I add it to self.info), and at the end
+            # in the stats report, hence I add it to self.world_stats
+            self.info["battery_left"] = self.battery_left
+            self.world_stats["battery_left"] = self.battery_left
 
             # set agent_moved to false if actual_action is stand_still
             if actual_action == 4:
@@ -431,8 +450,7 @@ class Environment:
             time_to_wait = self.target_spf - (time() - start_time)
             if time_to_wait > 0:
                 sleep(time_to_wait)
-            self.gui.render(self.grid.cells, self.agent_pos,
-                            self.info, is_single_step)
+            self.gui.render(self.grid.cells, self.agent_pos, self.info, is_single_step)
 
         return self.grid.cells, reward, terminal_state, self.info
 
@@ -469,6 +487,7 @@ class Environment:
         random_seed: int | float | str | bytes | bytearray = 0,
         show_images: bool = False,
         custom_file_name: str | None = None,
+        battery_size: int = 1000,
     ):
         """Evaluates a single trained agent's performance.
 
@@ -506,7 +525,7 @@ class Environment:
                 "Evaluation output directory does not exist. Creating the " "directory."
             )
             out_dir.mkdir(parents=True, exist_ok=True)
-        env = Environment(
+        env = EnvironmentBattery(
             grid_fp=grid_fp,
             no_gui=True,
             n_agents=len(agents),
@@ -514,6 +533,7 @@ class Environment:
             agent_start_pos=agent_start_pos,
             target_fps=-1,
             random_seed=random_seed,
+            battery_size=battery_size,
         )
         obs, info = env.get_observation()
 
@@ -548,9 +568,11 @@ class Environment:
         print("Evaluation complete. Results:")
         # File name is the current date and time
         file_name = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
-        out_fp = out_dir / \
-            f"{file_name}.txt" if not custom_file_name else out_dir / \
-            f"{custom_file_name}.txt"
+        out_fp = (
+            out_dir / f"{file_name}.txt"
+            if not custom_file_name
+            else out_dir / f"{custom_file_name}.txt"
+        )
         with open(out_fp, "w") as f:
             for key, value in world_stats.items():
                 f.write(f"{key}: {value}\n")
@@ -559,10 +581,12 @@ class Environment:
         # Save the images
         for i, img in enumerate(path_images):
             img_name = f"{file_name}_agent-{i}"
-            out_fp = out_dir / \
-                f"{img_name}.png" if not custom_file_name else out_dir / \
-                f"{custom_file_name}.png"
-            print('out_fp: ', out_fp, 'custom_file_name: ', custom_file_name)
+            out_fp = (
+                out_dir / f"{img_name}.png"
+                if not custom_file_name
+                else out_dir / f"{custom_file_name}.png"
+            )
+            print("out_fp: ", out_fp, "custom_file_name: ", custom_file_name)
             img.save(out_fp)
             if show_images:
                 img.show(f"Agent {i} Path Frequency")
@@ -577,9 +601,7 @@ if __name__ == "__main__":
     base_grid_fp = Path(
         "C:/Users/20173850/Documents/2AMC15/Assignment/GitHub/2AMC15-2023-DIC/grid_configs/testroom.grd"
     )
-    envi = Environment(
-        base_grid_fp, False, 1, target_fps=5
-    )
+    envi = Environment(base_grid_fp, False, 1, target_fps=5)
     observe, inf = envi.get_observation()
 
     # Observe:
