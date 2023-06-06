@@ -113,6 +113,49 @@ def reward_function(grid: Grid, info: dict) -> float:
         return float(5)
 
 
+def battery_reward_function(grid: Grid, info: dict) -> float:
+    """
+    Custom reward function used in the Battery Environment.
+
+    The agent is punished most if he runs out of battery. If the agent
+    goes to the charger, this is rewarded if the agent has cleaned all
+    dirt or if the agent has low battery. If the agent goes to the charger
+    with enough battery left, without having cleaned all dirt, this is punished.
+
+    Furthermore, staying at the same location is punished and moving without
+    cleaning is punished a little. Cleaning dirt is rewarded.
+    """
+    # Agent at charger
+    if info["agent_charging"][0] == True:
+        # Reward if at charger after cleaning everything
+        if grid.sum_dirt() == 0:
+            return float(20)
+
+        # punished for going to charger with enough battery left
+        elif info["battery_left"] > 10:
+            return float(-50)
+
+        # reward for going to charger with low battery
+        else:
+            return float(10)
+
+    # punish heavily for running out of battery
+    elif info["battery_left"] == 0:
+        return float(-100)
+
+    # punish for staying at the same location
+    elif info["agent_moved"][0] == False:
+        return float(-5)
+
+    # punish a little for moving without cleaning
+    elif sum(info["dirt_cleaned"]) < 1:
+        return float(-1)
+
+    # reward for cleaning dirt
+    else:
+        return float(5)
+
+
 def main(
     no_gui: bool,
     iters: int,
@@ -144,7 +187,7 @@ def main(
                     target_fps=fps,
                     sigma=0,
                     random_seed=random_seed,
-                    reward_fn=reward_function,
+                    reward_fn=battery_reward_function,
                 )
                 if not no_battery
                 else Environment(
@@ -161,37 +204,11 @@ def main(
 
             obs, info = env.get_observation()
 
-            charger_loc = np.where(obs == 4)
-            cx, cy = charger_loc[0][0], charger_loc[1][0]
-
             # add all agents to test
             agents = [
-                QAgent(0, learning_rate=1, gamma=0.6, epsilon_decay=0.001),
-                # QAgent(0, learning_rate=1, gamma=0.9, epsilon_decay=0.001),
-                #     MCAgent(
-                #         0,
-                #         obs,
-                #         gamma=0.6,
-                #         epsilon=0.1,
-                #         len_episode=100,
-                #         n_times_no_policy_change_for_convergence=100,
-                #     ),
-                #     MCAgent(
-                #         0,
-                #         obs,
-                #         gamma=0.9,
-                #         epsilon=0.1,
-                #         len_episode=100,
-                #         n_times_no_policy_change_for_convergence=100,
-                #     ),
-                #     Policy_iteration(
-                #         0,
-                #         gamma=0.6,
-                #     ),
-                #     Policy_iteration(
-                #         0,
-                #         gamma=0.9,
-                #     ),
+                QAgent(
+                    0, learning_rate=1, gamma=0.6, epsilon_decay=0.001
+                ),  # Replace with your agent
             ]
 
             # Iterate through each agent for `iters` iterations

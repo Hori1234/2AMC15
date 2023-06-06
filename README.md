@@ -1,43 +1,29 @@
-# 2AMC15-2023-DIC
+# Explanation Battery Branch.
 
-Welcome to 2AMC15 Data Intelligence Challenge solution of Group 2!
-This is the repository containing our solution.
+This branch is created to create the battery environment. This ReadMe file is created
+only to explain how to use the battery environment.
 
-## Test our agents
+## Using the battery environment
 
-Our agents are tested and evaluated on six different setups. For details about these setups, please refer to our report.
-To run the tests, please run the following command: `$ python train.py --out results/`.
+Copy the following files from this branch to the branch you're using to create your agent:
 
-Running this line will prompt all agents to be trained and evaluated on the six different setups.
-The results of this example command will be saved in the `results/` folder.
+- `__init__.py`
+- `environment_battery.py`
+- `train.py`
 
-```bash
-usage: train.py [-h] [--no_gui] [--fps FPS] [--iter ITER]
-                [--random_seed RANDOM_SEED] [--out OUT]
+If you've done this, running train.py as normal will train your agent in the battery environment.
+If you want to change the capacity of the battery you can do this by setting the `--battery_size`
+arg in the command line. So, for example, running `python train.py --battery_size 200` will give the
+agent a battery with a capacity of 200 steps. **The default value for the battery size is 1000 steps**.
 
-DIC Reinforcement Learning Trainer.
+## Using the default environment
 
-options:
-  -h, --help            show this help message and exit
-  --no_gui              Disables rendering to train faster
-  --fps FPS             Frames per second to render at. Only used if no_gui is
-                        not set.
-  --iter ITER           Number of iterations to go through.
-  --random_seed RANDOM_SEED
-                        Random seed value for the environment.
-  --out OUT             Where to save training results.
-```
+If you want to train your agent on the default (old) environment, you can do this by adding the arg
+`--no_battery` to the command line, e.g. `python train.py --no_battery`. Adding this arg will make
+everything work exactly the same way as it did before the battery environment was created.
 
-## Requirements
+## Note about the the reward function
 
-- python ~= 3.10
-- numpy >= 1.24
-- tqdm ~= 4
-- pygame ~= 2.3
-- flask ~= 2.2
-- flask-socketio ~= 5.3
-- pillow ~= 9.4
-
-## Reproducibility
-Run the following command in the command-line to reproduce the results.
-$ python train.py --iter 500000 --no_gui
+I created a new reward function for the battery environment punishing the agent for running out of
+battery or going to the charger too soon. I'm not completely sure if all values i chose make sense,
+so please look at this critically and change it if you think that'll make it better.

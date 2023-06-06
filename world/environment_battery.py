@@ -160,38 +160,12 @@ class EnvironmentBattery:
         }
 
     def _initialize_agent_pos(self):
-        """Initializes agent position from the givin initial variables.
+        """Initializes agent position at the charger."""
+        charger_loc = np.where(self.grid.cells == 4)
 
-        If None is given as the agent_start_pos, choose a position at random to
-        place to the agent. If it is filled, try again until it finds a place
-        that has not been filled yet. This assumes a mostly empty grid.
-        """
-        agent_pos = []
-        if self.agent_start_pos is not None:
-            # We try placing each agent at every requested position.
-            for i in range(self.n_agents):
-                pos = (self.agent_start_pos[i][0], self.agent_start_pos[i][1])
-                if self.grid.cells[pos] == 0:
-                    # Cell is empty. We can place the agent there.
-                    agent_pos.append(pos)
-                else:
-                    # Agent is placed on walls/obstacle/dirt/charger
-                    raise ValueError(
-                        "Attempted to place agent on top of wall or " "charger"
-                    )
-            self.agent_pos = deepcopy(self.agent_start_pos)
-        else:
-            # No positions were given. We place agents randomly.
-            warn(
-                "No initial agent positions given. Randomly placing agents "
-                "on the grid."
-            )
-            for _ in range(self.n_agents):
-                # First get all empty positions
-                zeros = np.where(self.grid.cells == 0)
-                idx = random.randint(0, len(zeros[0]) - 1)
-                agent_pos.append((zeros[0][idx], zeros[1][idx]))
-            self.agent_pos = agent_pos
+        cx, cy = charger_loc[0][0], charger_loc[1][0]
+
+        self.agent_pos = [(cx, cy)]
 
     def get_observation(self):  # -> [np.ndarray, dict]:
         """Gets the current observation and information.
@@ -310,16 +284,11 @@ class EnvironmentBattery:
                 self.info["agent_moved"][agent_id] = True
                 self.world_stats["total_agent_moves"] += 1
             case 4:  # Moved to the charger
-                # Moving to charger is only permitted if the room is clean.
-                # NOTE: This is a pending design decision.
-                if self.grid.sum_dirt() == 0:
-                    self.agent_pos[agent_id] = new_pos
-                    self.agent_done[agent_id] = True
-                    self.info["agent_charging"][agent_id] = True
-                    self.world_stats["total_agents_at_charger"] += 1
-                # Otherwise, the agent can't move and nothing happens
-                else:
-                    self.world_stats["total_failed_moves"] += 1
+                # Moving to charger is always allowed in the battery environment
+                self.agent_pos[agent_id] = new_pos
+                self.agent_done[agent_id] = True
+                self.info["agent_charging"][agent_id] = True
+                self.world_stats["total_agents_at_charger"] += 1
             case _:
                 raise ValueError(
                     f"Grid is badly formed. It has a value of "
@@ -601,7 +570,7 @@ if __name__ == "__main__":
     base_grid_fp = Path(
         "C:/Users/20173850/Documents/2AMC15/Assignment/GitHub/2AMC15-2023-DIC/grid_configs/testroom.grd"
     )
-    envi = Environment(base_grid_fp, False, 1, target_fps=5)
+    envi = EnvironmentBattery(base_grid_fp, False, 1, target_fps=5)
     observe, inf = envi.get_observation()
 
     # Observe:
