@@ -91,6 +91,15 @@ class MCAgent(BaseAgent):
         self.episode = deque()
         self.episode_rewards = deque()
 
+        # For investigation
+        self.policies = deque(maxlen=2)
+        self.optimal_policies = deque(maxlen=2)
+        self.episodes = deque(maxlen=2)
+        self.rewards = deque(maxlen=2)
+
+        # Also for investigation
+        self.old_normal_policy = deepcopy(self.policy)
+
     def process_reward(self, obs: np.ndarray, reward: float, info):
         """
         Check if terminated (we assume that happens if charging station reached) Or maximum number of steps reached in episode.
@@ -115,6 +124,11 @@ class MCAgent(BaseAgent):
             # so times_finished is increased by 1
             if reward == 10:
                 self.times_finished += 1
+
+            self.policies.append(deepcopy(self.policy))
+            self.optimal_policies.append(deepcopy(self.optimal_policy))
+            self.episodes.append(deepcopy(self.episode))
+            self.rewards.append(deepcopy(self.episode_rewards))
 
             # update Q and policy
             self.update_Q()
@@ -208,6 +222,7 @@ class MCAgent(BaseAgent):
                 we take the epsilon greedy policy. Defaults to False.
         """
         self.old_optimal_policy = deepcopy(self.optimal_policy)
+        self.old_normal_policy = deepcopy(self.policy)
 
         # loop over all x,y in self.Q
         for x in range(self.x_size):
@@ -250,7 +265,7 @@ class MCAgent(BaseAgent):
         # this prevents the agent from converging too early, as it might not have
         # seen all states yet
         if self.times_finished > 4:
-            if np.array_equal(self.optimal_policy, self.old_optimal_policy):
+            if np.array_equal(self.policy, self.old_normal_policy):
                 self.constant_optimal_policy_counter += 1
             else:
                 self.constant_optimal_policy_counter = 0
@@ -286,3 +301,39 @@ class MCAgent(BaseAgent):
 
         # return the action we take
         return next_action
+
+    def print_policy(self, optimal):
+        """
+        Print the last 2 (optimal) policies.
+        """
+        for i, pol in enumerate(self.optimal_policies if optimal else self.policies):
+            print(f"Printing {' Optimal ' if optimal else ''}Policy ({i+1}/2):")
+            print()
+            for y in range(self.y_size):
+                for x in range(self.x_size):
+                    pol_value = pol[x][y]
+                    print(self.print_policy_value(pol_value), end=" | ")
+                    # print(x, y, end=" | ")
+                print()  # newline
+
+    def print_policy_value(self, value):
+        match value:
+            case 0:
+                return "↓"
+            case 1:
+                return "↑"
+            case 2:
+                return "←"
+            case 3:
+                return "→"
+            case 4:
+                return "X"
+
+    def print_episode_and_reward(self):
+        for i in range(2):
+            print(f"Printing Episode ({i+1}/2):")
+            print("Episode: ", self.episodes[i])
+            print()
+            print(f"Printing Rewards ({i+1}/2):")
+            print("Rewards: ", self.rewards[i])
+            print()

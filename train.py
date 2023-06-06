@@ -11,6 +11,7 @@ from pathlib import Path
 
 from tqdm import trange
 import time
+import numpy as np
 
 # This value of sigma will be used for both grids
 # The other sigma
@@ -71,6 +72,13 @@ def parse_args():
         help="Where to save training results.",
     )
 
+    p.add_argument(
+        "--battery_size",
+        type=int,
+        default=1000,
+        help="Number of actions the agent can take before it needs to recharge.",
+    )
+
     return p.parse_args()
 
 
@@ -100,11 +108,7 @@ def reward_function(grid: Grid, info: dict) -> float:
 
 
 def main(
-    no_gui: bool,
-    iters: int,
-    fps: int,
-    out: Path,
-    random_seed: int,
+    no_gui: bool, iters: int, fps: int, out: Path, random_seed: int, battery_size: int
 ):
     """Main loop of the program."""
 
@@ -120,7 +124,8 @@ def main(
             # Set up the environment and reset it to its initial state
             env = Environment(
                 grid,
-                no_gui,
+                battery_size=battery_size,
+                no_gui=no_gui,
                 n_agents=1,
                 agent_start_pos=[(1, 1)],
                 target_fps=fps,
@@ -130,34 +135,37 @@ def main(
             )
             obs, info = env.get_observation()
 
+            charger_loc = np.where(obs == 4)
+            cx, cy = charger_loc[0][0], charger_loc[1][0]
+
             # add all agents to test
             agents = [
                 QAgent(0, learning_rate=1, gamma=0.6, epsilon_decay=0.001),
-                QAgent(0, learning_rate=1, gamma=0.9, epsilon_decay=0.001),
-                MCAgent(
-                    0,
-                    obs,
-                    gamma=0.6,
-                    epsilon=0.1,
-                    len_episode=100,
-                    n_times_no_policy_change_for_convergence=100,
-                ),
-                MCAgent(
-                    0,
-                    obs,
-                    gamma=0.9,
-                    epsilon=0.1,
-                    len_episode=100,
-                    n_times_no_policy_change_for_convergence=100,
-                ),
-                Policy_iteration(
-                    0,
-                    gamma=0.6,
-                ),
-                Policy_iteration(
-                    0,
-                    gamma=0.9,
-                ),
+                # QAgent(0, learning_rate=1, gamma=0.9, epsilon_decay=0.001),
+                #     MCAgent(
+                #         0,
+                #         obs,
+                #         gamma=0.6,
+                #         epsilon=0.1,
+                #         len_episode=100,
+                #         n_times_no_policy_change_for_convergence=100,
+                #     ),
+                #     MCAgent(
+                #         0,
+                #         obs,
+                #         gamma=0.9,
+                #         epsilon=0.1,
+                #         len_episode=100,
+                #         n_times_no_policy_change_for_convergence=100,
+                #     ),
+                #     Policy_iteration(
+                #         0,
+                #         gamma=0.6,
+                #     ),
+                #     Policy_iteration(
+                #         0,
+                #         gamma=0.9,
+                #     ),
             ]
 
             # Iterate through each agent for `iters` iterations
@@ -167,7 +175,6 @@ def main(
                     grid == Path("grid_configs/simple1.grd")
                 ):
                     continue
-                
 
                 fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
@@ -204,7 +211,6 @@ def main(
                         break
 
                 obs, info, world_stats = env.reset()
-                print(world_stats)
 
                 if type(agent).__name__ == "MCAgent":
                     agent.update_policy(optimal=True)
@@ -220,15 +226,12 @@ def main(
                     sigma,
                     agent_start_pos=[(1, 1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+                    battery_size=battery_size,
                 )
 
 
 if __name__ == "__main__":
     args = parse_args()
     main(
-        args.no_gui,
-        args.iter,
-        args.fps,
-        args.out,
-        args.random_seed,
+        args.no_gui, args.iter, args.fps, args.out, args.random_seed, args.battery_size
     )

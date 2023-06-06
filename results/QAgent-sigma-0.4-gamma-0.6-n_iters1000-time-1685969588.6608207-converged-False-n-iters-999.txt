@@ -1,0 +1,7 @@
+total_dirt_cleaned: 6
+total_steps: 568
+total_agent_moves: 504
+total_agents_at_charger: 1
+total_failed_moves: 63
+battery_left: 432
+dirt_remaining: 0
