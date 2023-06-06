@@ -167,7 +167,6 @@ def main(
                     grid == Path("grid_configs/simple1.grd")
                 ):
                     continue
-                
 
                 fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
