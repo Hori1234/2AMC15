@@ -7,9 +7,10 @@ only to explain how to use the battery environment.
 
 Copy the following files from this branch to the branch you're using to create your agent:
 
-- `__init__.py`
-- `environment_battery.py`
+- `world/__init__.py`
+- `world/environment_battery.py`
 - `train.py`
+- Change the agent on line 209 of `train.py` to your agent.
 
 If you've done this, running train.py as normal will train your agent in the battery environment.
 If you want to change the capacity of the battery you can do this by setting the `--battery_size`
