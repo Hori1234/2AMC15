@@ -1,6 +1,6 @@
 # Explanation Battery Branch.
 
-This branch is created to create the battery environment. This ReadMe file is created
+This branch was made to create the battery environment. This ReadMe file is created
 only to explain how to use the battery environment.
 
 ## Using the battery environment
