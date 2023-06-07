@@ -125,12 +125,19 @@ def main(
 
         # add all agents to test
         agents = [
-            DeepQAgent(agent_number=0, learning_rate=0.01, gamma=0.95, epsilon_decay=0.001, memory_size=1000, batch_size=100, tau=0.05),
+            DeepQAgent(
+                agent_number=0,
+                learning_rate=0.01,
+                gamma=0.95,
+                epsilon_decay=0.001,
+                memory_size=1000,
+                batch_size=100,
+                tau=0.05,
+            ),
         ]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
-
             fname = f"{type(agent).__name__}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
             print("Agent is ", type(agent).__name__, " gamma is ", agent.gamma)
@@ -139,8 +146,6 @@ def main(
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
                 old_state = info["agent_pos"][agent.agent_number]
-
-                
 
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
@@ -153,7 +158,7 @@ def main(
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
-                    print(f'Epsilon: {agent.eps}')
+                    print(f"Epsilon: {agent.eps}")
 
                 # Early stopping criterion.
                 if converged:
