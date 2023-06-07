@@ -160,8 +160,8 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        Path("grid_configs/20-10-grid.grd"),
-        # Path("grid_configs/rooms-1.grd"),
+        # Path("grid_configs/20-10-grid.grd"),
+        Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
@@ -197,15 +197,7 @@ def main(
 
         # add all agents to test
         agents = [
-            DeepQAgent(
-                agent_number=0,
-                learning_rate=0.01,
-                gamma=0.95,
-                epsilon_decay=0.001,
-                memory_size=1000,
-                batch_size=100,
-                tau=0.05,
-            ),
+            DeepQAgent(agent_number=0, learning_rate=0.00001, gamma=0.9, epsilon_decay=0.0001, memory_size=100000, batch_size=32, tau=0.1, epsilon_stop=0.3),
         ]
 
         # Iterate through each agent for `iters` iterations

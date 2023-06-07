@@ -37,9 +37,9 @@ class ReplayMemory(object):
 class DQN(nn.Module):
     def __init__(self, n_observations, n_actions):
         super(DQN, self).__init__()
-        self.layer1 = nn.Linear(n_observations, 80)
-        # self.layer2 = nn.Linear(80, 40)
-        self.layer3 = nn.Linear(80, n_actions)
+        self.layer1 = nn.Linear(n_observations, 128)
+        self.layer2 = nn.Linear(128, 128)
+        self.layer3 = nn.Linear(128, n_actions)
         self.dropout = nn.Dropout(0.5)
 
     # Called with either one element to determine next action, or a batch
@@ -47,7 +47,7 @@ class DQN(nn.Module):
     def forward(self, x):
         x = F.leaky_relu(self.layer1(x))
         # x = self.dropout(x)
-        # x = F.leaky_relu(self.layer2(x))
+        x = F.leaky_relu(self.layer2(x))
         return self.layer3(x)
 
 
@@ -61,16 +61,7 @@ from agents import BaseAgent
 
 
 class DeepQAgent(BaseAgent):
-    def __init__(
-        self,
-        agent_number,
-        learning_rate=0.01,
-        gamma=0.95,
-        epsilon_decay=0.01,
-        memory_size=1000,
-        batch_size=100,
-        tau=0.05,
-    ):
+    def __init__(self, agent_number, learning_rate=0.01, gamma=0.95, epsilon_decay=0.01, memory_size=1000, batch_size=100, tau=0.05, epsilon_stop=0.1):
         """Chooses an action based on learned q learning policy.
 
         Args:
@@ -81,6 +72,7 @@ class DeepQAgent(BaseAgent):
         self.gamma = gamma
         self.ed = epsilon_decay
         self.eps = 1
+        self.eps_stop = epsilon_stop
         self.tau = tau
         self.w = None
         self.h = None
@@ -163,7 +155,7 @@ class DeepQAgent(BaseAgent):
                 self.first_run = False
 
         # Return true if the agent should stop learning (converged). When epsilon equals zero the agent is terminated.
-        if self.eps == 0:
+        if self.eps < self.eps_stop:
             return True
         else:
             return False
