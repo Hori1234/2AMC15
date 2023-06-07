@@ -171,12 +171,17 @@ def main(
                     # old_state = info["agent_pos"][agent.agent_number]
 
                     # Combine the info of the agent position with the observation in one np.array
+                    #print(obs)
+                    obs = obs_to_dirtstate(obs)
+                    #print(obs)
                     old_state = np.concatenate((obs.flatten(), info["agent_pos"][0]))
                     action = agent.take_action(obs, info)
 
                     # The action is performed in the environment
                     obs, reward, terminated, info = env.step([action])
-                    # new_state = info["agent_pos"][agent.agent_number]
+                    #print(obs)
+                    obs = obs_to_dirtstate(obs)
+                    #print(obs)
                     new_state = np.concatenate((obs.flatten(), info["agent_pos"][0]))
 
                     if type(agent).__name__ == "DDQNAgent":
@@ -223,6 +228,15 @@ def main(
                     agent_start_pos=[(1, 1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
+
+def obs_to_dirtstate(obs):
+    """Converts the observation to a dirt state"""
+    dirt_state = np.zeros((obs.shape[0], obs.shape[1]))
+    for i in range(obs.shape[0]):
+        for j in range(obs.shape[1]):
+            if obs[i][j] == 3:
+                dirt_state[i][j] = 1
+    return dirt_state
 
 
 if __name__ == "__main__":

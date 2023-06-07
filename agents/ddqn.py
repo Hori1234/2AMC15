@@ -41,6 +41,7 @@ class DDQNAgent:
         self.epsilon_decay = 0.005
         self.max_epsilon = 1
         self.min_epsilon = 0.001
+        self.tau = 0.05
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("the test will be run on: ", self.device)
@@ -120,7 +121,7 @@ class DDQNAgent:
         # print(states.shape, actions.shape, rewards.shape, next_states.shape)
 
         q_values = self.q_network(states).gather(1, actions)
-        next_q_values = self.tacrget_network(next_states).detach()
+        next_q_values = self.target_network(next_states).detach()
         max_next_actions = torch.argmax(
             self.q_network(next_states), dim=1, keepdim=True
         )
@@ -135,6 +136,12 @@ class DDQNAgent:
         loss.backward()
         self.optimizer.step()
 
+        target_net_state_dict   = self.target_network.state_dict()
+        q_net_state_dict        = self.q_network.state_dict()
+        for key in target_net_state_dict:
+            target_net_state_dict[key] = (1 - self.tau) * target_net_state_dict[key] + self.tau * q_net_state_dict[key]
+        self.target_network.load_state_dict(target_net_state_dict)
+
     def update_target_network(self):
         self.target_network.load_state_dict(self.q_network.state_dict())
 
@@ -144,7 +151,7 @@ class DDQNAgent:
         #keep a constant epsilon of 0.2
         #self.epsilon = 0.2
 
-        
+
         # self.epsilon *= decay_rate
         #print(self.epsilon)
         # self.epsilon = self.min_epsilon + (
