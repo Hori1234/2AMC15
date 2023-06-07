@@ -17,6 +17,7 @@ from pathlib import Path
 
 from tqdm import trange
 import time
+import numpy as np
 
 # or maybe we want to keep gamma constant?
 TWO_EXPERIMENTS_SIGMA = 0
@@ -143,7 +144,7 @@ def main(
             agents = [
                 DDQNAgent(
                     0,
-                    state_size=obs.shape[0] * obs.shape[1],
+                    state_size=obs.shape[0] * obs.shape[1] +2,
                     action_size=4,
                     hidden_size=64,
                     learning_rate=0.001,
@@ -168,16 +169,19 @@ def main(
                 for i in trange(iters):
                     # Agent takes an action based on the latest observation and info
                     # old_state = info["agent_pos"][agent.agent_number]
-                    old_state = obs.flatten()
+
+                    # Combine the info of the agent position with the observation in one np.array
+                    old_state = np.concatenate((obs.flatten(), info["agent_pos"][0]))
                     action = agent.take_action(obs, info)
 
                     # The action is performed in the environment
                     obs, reward, terminated, info = env.step([action])
                     # new_state = info["agent_pos"][agent.agent_number]
-                    new_state = obs.flatten()
+                    new_state = np.concatenate((obs.flatten(), info["agent_pos"][0]))
 
                     if type(agent).__name__ == "DDQNAgent":
                         # check if teh algorithm converged
+                        #print("the old state which is used to call process_reward is: ", old_state)
                         converged = agent.process_reward(
                             obs, info, reward, old_state, new_state, action, terminated
                         )
@@ -207,6 +211,9 @@ def main(
                     agent.update_policy(optimal=True)
                 if type(agent).__name__ == "Policy_iteration":
                     agent.dirty_tiles = []
+                
+                #save the model of the agent for later use
+                agent.save_model(fname)
                 Environment.evaluate_agent(
                     grid,
                     [agent],
