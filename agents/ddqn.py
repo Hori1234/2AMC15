@@ -38,14 +38,13 @@ class DDQNAgent:
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.epsilon = epsilon
-        self.epsilon_decay = 0.005
+        self.epsilon_decay = 0.0001
         self.max_epsilon = 1
         self.min_epsilon = 0.001
         self.tau = 0.05
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("the test will be run on: ", self.device)
-
 
         # Q-networks
         self.q_network = DQN(state_size, action_size, hidden_size).to(self.device)
@@ -66,10 +65,9 @@ class DDQNAgent:
         if np.random.rand() <= self.epsilon:
             return np.random.choice(self.action_size)
         else:
-            #combine the agent position with the state into one torch tensor
+            # combine the agent position with the state into one torch tensor
             state = np.concatenate((observation.flatten(), agent_pos))
             state = torch.tensor(state, dtype=torch.float32).flatten().to(self.device)
-
 
             with torch.no_grad():
                 q_values = self.q_network(state)
@@ -85,8 +83,8 @@ class DDQNAgent:
         action: int,
         done: bool,
     ):
-        #agent_pos = info["agent_pos"][self.agent_number]
-        #print(f"old_state looks like this: {old_state}")
+        # agent_pos = info["agent_pos"][self.agent_number]
+        # print(f"old_state looks like this: {old_state}")
         self.memory.append((old_state, action, reward, next_state, done))
 
         if self.epsilon < 0.0011:
@@ -95,19 +93,19 @@ class DDQNAgent:
             return False
 
     def replay(self, batch_size):
-        #print(f"self.memory looks like this: {self.memory}")
+        # print(f"self.memory looks like this: {self.memory}")
         if len(self.memory) < batch_size:
             return
 
         indices = np.random.choice(len(self.memory), batch_size, replace=False)
-        #print(f"indices looks like this: {indices}")
-        #print(f"self.memory looks like this: {self.memory[1][1]}")
+        # print(f"indices looks like this: {indices}")
+        # print(f"self.memory looks like this: {self.memory[1][1]}")
 
-        #Below one ran, but gave some issues before. Maybe switch back to this one if the other one doesn't work	
-        #batch = np.array(self.memory)[indices]
+        # Below one ran, but gave some issues before. Maybe switch back to this one if the other one doesn't work
+        # batch = np.array(self.memory)[indices]
         batch = [self.memory[i] for i in indices]
 
-        #print(f"batch looks like this: {batch}")    
+        # print(f"batch looks like this: {batch}")
         states, actions, rewards, next_states, dones = zip(*batch)
 
         states = torch.tensor(states, dtype=torch.float32).to(self.device)
@@ -153,7 +151,7 @@ class DDQNAgent:
 
 
         # self.epsilon *= decay_rate
-        #print(self.epsilon)
+        # print(self.epsilon)
         # self.epsilon = self.min_epsilon + (
         #     self.max_epsilon - self.min_epsilon
         # ) * np.exp(-self.epsilon_decay * episode)
