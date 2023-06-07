@@ -38,7 +38,7 @@ class DDQNAgent:
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.epsilon = epsilon
-        self.epsilon_decay = 0.005
+        self.epsilon_decay = 0.0001
         self.max_epsilon = 1
         self.min_epsilon = 0.001
 
@@ -78,10 +78,10 @@ class DDQNAgent:
     ):
         self.memory.append((old_state, action, reward, next_state, done))
 
-        if self.epsilon == 0:
-            return True
-        else:
-            return False
+        # if self.epsilon < 0.0011:
+        #     return True
+        # else:
+        return False
 
     def replay(self, batch_size):
         if len(self.memory) < batch_size:
@@ -121,10 +121,10 @@ class DDQNAgent:
         self.target_network.load_state_dict(self.q_network.state_dict())
 
     def decay_epsilon(self, episode):
-        # self.epsilon *= decay_rate
-        self.epsilon = self.min_epsilon + (
-            self.max_epsilon - self.min_epsilon
-        ) * np.exp(-self.epsilon_decay * episode)
+        self.epsilon *= self.epsilon_decay
+        # self.epsilon = self.min_epsilon + (
+        #     self.max_epsilon - self.min_epsilon
+        # ) * np.exp(-self.epsilon_decay * episode)
 
     def save_model(self, path):
         torch.save(self.q_network.state_dict(), path)

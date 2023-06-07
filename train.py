@@ -116,7 +116,7 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        Path("grid_configs/simple1.grd"),
+        # Path("grid_configs/simple1.grd"),
         Path("grid_configs/20-10-grid.grd"),
     ]
 
@@ -195,6 +195,7 @@ def main(
                     # If the agent is terminated, we reset the env.
                     if terminated:
                         obs, info, world_stats = env.reset()
+                        print("Agent terminated")
                         if type(agent).__name__ == "Policy_iteration":
                             agent.dirty_tiles = []
                     # Early stopping criterion.
