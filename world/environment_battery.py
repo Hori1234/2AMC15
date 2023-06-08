@@ -147,6 +147,7 @@ class EnvironmentBattery:
             "agent_moved": [False] * self.n_agents,
             "agent_charging": self.agent_done,
             "agent_pos": self.agent_pos,
+            "quick_charging": [False] * self.n_agents,
         }
 
     @staticmethod
@@ -157,6 +158,8 @@ class EnvironmentBattery:
             "total_agent_moves": 0,
             "total_agents_at_charger": 0,
             "total_failed_moves": 0,
+            "empty_battery_counter": 0,
+            "quick_charged": 0,
         }
 
     def _initialize_agent_pos(self):
@@ -238,7 +241,7 @@ class EnvironmentBattery:
         self.info = self._reset_info()
         self.world_stats = self._reset_world_stats()
         self.battery_left = self.battery_size
-        self.info['battery_left'] = [self.battery_left] * self.n_agents
+        self.info["battery_left"] = [self.battery_left] * self.n_agents
         if not self.no_gui:
             self.gui = EnvironmentGUI(self.grid.cells.shape)
             self.gui.reset()
@@ -287,9 +290,18 @@ class EnvironmentBattery:
             case 4:  # Moved to the charger
                 # Moving to charger is always allowed in the battery environment
                 self.agent_pos[agent_id] = new_pos
-                self.agent_done[agent_id] = True
-                self.info["agent_charging"][agent_id] = True
-                self.world_stats["total_agents_at_charger"] += 1
+                if self.grid.sum_dirt() == 0:
+                    self.agent_done[agent_id] = True
+                    self.info["agent_charging"][agent_id] = True
+                    self.world_stats["total_agents_at_charger"] += 1
+                else:
+                    self.battery_left = (
+                        self.battery_size + 1
+                    )  # -1 because after calling this function 1 will be subtracted again
+                    self.info["agent_moved"][agent_id] = True
+                    self.world_stats["total_agent_moves"] += 1
+                    self.info["quick_charging"][agent_id] = True
+                    self.world_stats["quick_charged"] += 1
             case _:
                 raise ValueError(
                     f"Grid is badly formed. It has a value of "
@@ -354,6 +366,11 @@ class EnvironmentBattery:
         max_y = self.grid.n_rows - 1
 
         for i, action in enumerate(actions):
+            # Reset battery if empty, and register that we had an empty battery in self.info
+            if self.battery_left == 0:
+                self.battery_left = self.battery_size
+                self.world_stats["empty_battery_counter"] += 1
+
             if self.agent_done[i]:
                 # The agent is already on the charger, so it is done.
                 continue
@@ -389,14 +406,10 @@ class EnvironmentBattery:
                         f"is not one of the possible actions."
                     )
 
-            if self.battery_left > 0:
-                self._move_agent(new_pos, i)
-                self.battery_left -= 1
-
-            else:  # Battery is empty
-                warn("Battery is empty. The agent cannot move anymore.")
-                self.info["agent_moved"][i] = False
-                self.world_stats["total_failed_moves"] += 1
+            # Always do this, battery cannot be 0 at this point anymore
+            # due to check at start of this function
+            self._move_agent(new_pos, i)
+            self.battery_left -= 1
 
             # I feel like we would want to know the state of the
             # battery both while running around on the grid,
@@ -413,8 +426,7 @@ class EnvironmentBattery:
         reward = self.reward_fn(self.grid, self.info)
 
         terminal_state = sum(self.agent_done) == self.n_agents
-        if self.battery_left == 0:
-            terminal_state = True
+
         if terminal_state:
             self.environment_ready = False
 

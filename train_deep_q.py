@@ -19,6 +19,8 @@ try:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+
+    # from agents.q_learning_agent import QAgent
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -165,6 +167,7 @@ def main(
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
+        # Path("grid_configs/simple1.grd"),
     ]
 
     for grid in grid_paths:
@@ -197,7 +200,18 @@ def main(
 
         # add all agents to test
         agents = [
-            DeepQAgent(agent_number=0, learning_rate=0.00001, gamma=0.9, epsilon_decay=0.001, memory_size=100000, batch_size=32, tau=0.1, epsilon_stop=0.3, battery_size=battery_size),
+            DeepQAgent(
+                agent_number=0,
+                learning_rate=0.00001,
+                gamma=0.9,
+                epsilon_decay=0.001,
+                memory_size=100000,
+                batch_size=32,
+                tau=0.1,
+                epsilon_stop=0.3,
+                battery_size=battery_size,
+            ),
+            # QAgent(0)
         ]
 
         # Iterate through each agent for `iters` iterations
@@ -216,9 +230,28 @@ def main(
                 obs, reward, terminated, info = env.step([action])
                 new_state = info["agent_pos"][agent.agent_number]
 
+                # print("info: ", info)
+                # print("world_stats: ", env.world_stats)
+                # print("reward: ", reward)
+
                 converged = agent.process_reward(
-                    obs, info, reward, old_state, new_state, action, old_battery_state, terminated
+                    obs,
+                    info,
+                    reward,
+                    old_state,
+                    new_state,
+                    action,
+                    old_battery_state,
+                    terminated,
                 )
+                # converged = agent.process_reward(
+                #     obs,
+                #     info,
+                #     reward,
+                #     old_state,
+                #     new_state,
+                #     action,
+                # )
 
                 # If the agent is terminated, we reset the env.
                 if terminated:
