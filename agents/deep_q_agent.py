@@ -61,7 +61,7 @@ from agents import BaseAgent
 
 
 class DeepQAgent(BaseAgent):
-    def __init__(self, agent_number, learning_rate=0.01, gamma=0.95, epsilon_decay=0.01, memory_size=1000, batch_size=100, tau=0.05, epsilon_stop=0.1):
+    def __init__(self, agent_number, battery_size, learning_rate=0.01, gamma=0.95, epsilon_decay=0.01, memory_size=1000, batch_size=100, tau=0.05, epsilon_stop=0.1):
         """Chooses an action based on learned q learning policy.
 
         Args:
@@ -82,6 +82,7 @@ class DeepQAgent(BaseAgent):
         self.first_run = True
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
+        self.battery_size = battery_size
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
@@ -102,6 +103,8 @@ class DeepQAgent(BaseAgent):
         old_state: tuple,
         new_state: tuple,
         action: int,
+        old_battery_state: int,
+        terminated: bool
     ):
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
@@ -117,12 +120,14 @@ class DeepQAgent(BaseAgent):
             # Create the state vector of the current state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[new_state[0], new_state[1]] = 1
-            new_state = list(clear_state.flatten()) + self.tile_state
+            new_battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
+            new_state = list(clear_state.flatten()) + self.tile_state + new_battery_state
 
             # Create the state vector of the previous state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[old_state[0], old_state[1]] = 1
-            old_state = list(clear_state.flatten()) + old_tile_state
+            old_battery_state = [old_battery_state/self.battery_size]
+            old_state = list(clear_state.flatten()) + old_tile_state + old_battery_state
 
             # Turn the variables into tensors for the neural network.
             old_state = torch.tensor(
@@ -140,15 +145,20 @@ class DeepQAgent(BaseAgent):
             # Optimize the model.
             self.optimize_model()
 
-        if info["agent_charging"][self.agent_number] == True:
-            # If the agent is charging, the episode has ended and update the epsilon value for the subsequent episode.
+        # print(observation)
+
+        if info["agent_charging"][self.agent_number] == True and (3 not in observation):
+            # If the agent is charging and all dirty tiles have been cleaned, 
+            # the episode has ended and update the epsilon value for the subsequent episode.
             self.eps = max(0, self.eps - self.ed)
             # Also, all the dirty tiles are reset so the tile state should only contain 1's.
             self.tile_state = [1 for i in range(len(self.tile_state))]
             if self.first_run:
                 # If this was the first run, determine the size of the input layer of the neural network.
-                state_space = self.w * self.h + len(self.tile_state)
+                # The state space is increased by 1 for the battery state.
+                state_space = self.w * self.h + len(self.tile_state) + 1
                 # state_space = 2+len(self.tile_state)
+                # print(f'State space: {state_space}')
                 # Initialize the neural network.
                 self.initialize_network(state_space, 4)
                 # The first run is over so set the first run boolean to False.
@@ -202,7 +212,8 @@ class DeepQAgent(BaseAgent):
             # Create the input layer of the neural network.
             state = np.zeros((self.h, self.w), dtype=np.uint8)
             state[x][y] = 1
-            state = list(state.flatten()) + self.tile_state
+            battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
+            state = list(state.flatten()) + self.tile_state + battery_state
             # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
@@ -230,6 +241,8 @@ class DeepQAgent(BaseAgent):
             device=device,
             dtype=torch.bool,
         )
+        # print(np.shape(batch.next_state[1]))
+        # print()
         non_final_next_states = torch.cat(
             [s for s in batch.next_state if s is not None]
         )

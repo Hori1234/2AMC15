@@ -238,6 +238,7 @@ class EnvironmentBattery:
         self.info = self._reset_info()
         self.world_stats = self._reset_world_stats()
         self.battery_left = self.battery_size
+        self.info['battery_left'] = [self.battery_left] * self.n_agents
         if not self.no_gui:
             self.gui = EnvironmentGUI(self.grid.cells.shape)
             self.gui.reset()
@@ -401,7 +402,7 @@ class EnvironmentBattery:
             # battery both while running around on the grid,
             # hence I add it to self.info), and at the end
             # in the stats report, hence I add it to self.world_stats
-            self.info["battery_left"] = self.battery_left
+            self.info["battery_left"] = [self.battery_left]
             self.world_stats["battery_left"] = self.battery_left
 
             # set agent_moved to false if actual_action is stand_still
@@ -412,6 +413,8 @@ class EnvironmentBattery:
         reward = self.reward_fn(self.grid, self.info)
 
         terminal_state = sum(self.agent_done) == self.n_agents
+        if self.battery_left == 0:
+            terminal_state = True
         if terminal_state:
             self.environment_ready = False
 

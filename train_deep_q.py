@@ -122,21 +122,21 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
         if grid.sum_dirt() == 0:
             return float(20)
 
-        # punished for going to charger with enough battery left
-        elif info["battery_left"] > 10:
-            return float(-50)
+        # # punished for going to charger with enough battery left
+        # elif info["battery_left"][0] > 20:
+        #     return float(-5)
 
-        # reward for going to charger with low battery
-        else:
-            return float(10)
+        # # reward for going to charger with low battery
+        # elif info["battery_left"][0] < 10:
+        #     return float(20)
 
     # punish heavily for running out of battery
-    elif info["battery_left"] == 0:
+    elif info["battery_left"][0] == 0:
         return float(-100)
 
     # punish for staying at the same location
     elif info["agent_moved"][0] == False:
-        return float(-5)
+        return float(-50)
 
     # punish a little for moving without cleaning
     elif sum(info["dirt_cleaned"]) < 1:
@@ -160,8 +160,8 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        # Path("grid_configs/20-10-grid.grd"),
-        Path("grid_configs/rooms-1.grd"),
+        Path("grid_configs/20-10-grid.grd"),
+        # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
@@ -197,7 +197,7 @@ def main(
 
         # add all agents to test
         agents = [
-            DeepQAgent(agent_number=0, learning_rate=0.00001, gamma=0.9, epsilon_decay=0.0001, memory_size=100000, batch_size=32, tau=0.1, epsilon_stop=0.3),
+            DeepQAgent(agent_number=0, learning_rate=0.00001, gamma=0.9, epsilon_decay=0.001, memory_size=100000, batch_size=32, tau=0.1, epsilon_stop=0.3, battery_size=battery_size),
         ]
 
         # Iterate through each agent for `iters` iterations
@@ -210,19 +210,21 @@ def main(
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
                 old_state = info["agent_pos"][agent.agent_number]
+                old_battery_state = info["battery_left"][agent.agent_number]
 
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
                 new_state = info["agent_pos"][agent.agent_number]
 
                 converged = agent.process_reward(
-                    obs, info, reward, old_state, new_state, action
+                    obs, info, reward, old_state, new_state, action, old_battery_state, terminated
                 )
 
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
+                    print("Terminated")
 
                 # Early stopping criterion.
                 if converged:
@@ -230,7 +232,6 @@ def main(
 
             agent.eps = 0
             obs, info, world_stats = env.reset()
-            print(world_stats)
 
             EnvironmentBattery.evaluate_agent(
                 grid,
