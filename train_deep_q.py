@@ -16,8 +16,13 @@ try:
     from world import Environment
     from world.grid import Grid
 
+    # BatteryRelated
+    from world import EnvironmentBattery
+
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+
+    from agents.q_learning_agent import QAgent
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -31,6 +36,9 @@ except ModuleNotFoundError:
         sys.path.extend(root_path)
 
     from world import Environment
+
+    # BatteryRelated
+    from world import EnvironmentBattery
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
@@ -63,6 +71,19 @@ def parse_args():
         help="Where to save training results.",
     )
 
+    # BatteryRelated
+    p.add_argument(
+        "--battery_size",
+        type=int,
+        default=1000,
+        help="Number of actions the agent can take before it needs to recharge.",
+    )
+
+    # BatteryRelated
+    p.add_argument(
+        "--no_battery", action="store_true", help="Disables the battery feature."
+    )
+
     return p.parse_args()
 
 
@@ -91,12 +112,58 @@ def reward_function(grid: Grid, info: dict) -> float:
         return float(5)
 
 
+# BatteryRelated
+def battery_reward_function(grid: Grid, info: dict) -> float:
+    """
+    Custom reward function used in the Battery Environment.
+
+    The agent is punished most if he runs out of battery. If the agent
+    goes to the charger, this is rewarded if the agent has cleaned all
+    dirt or if the agent has low battery. If the agent goes to the charger
+    with enough battery left, without having cleaned all dirt, this is punished.
+
+    Furthermore, staying at the same location is punished and moving without
+    cleaning is punished a little. Cleaning dirt is rewarded.
+    """
+    # Agent at charger
+    if info["agent_charging"][0] == True:
+        # Reward if at charger after cleaning everything
+        if grid.sum_dirt() == 0:
+            return float(20)
+
+        # # punished for going to charger with enough battery left
+        # elif info["battery_left"][0] > 20:
+        #     return float(-5)
+
+        # # reward for going to charger with low battery
+        # elif info["battery_left"][0] < 10:
+        #     return float(20)
+
+    # punish heavily for running out of battery
+    elif info["battery_left"][0] == 0:
+        return float(-100)
+
+    # punish for staying at the same location
+    elif info["agent_moved"][0] == False:
+        return float(-50)
+
+    # punish a little for moving without cleaning
+    elif sum(info["dirt_cleaned"]) < 1:
+        return float(-1)
+
+    # reward for cleaning dirt
+    else:
+        return float(5)
+
+
 def main(
     no_gui: bool,
     iters: int,
     fps: int,
     out: Path,
     random_seed: int,
+    battery_size: int,  # BatteryRelated
+    no_battery: bool,  # BatteryRelated
 ):
     """Main loop of the program."""
 
@@ -107,19 +174,35 @@ def main(
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
+        # Path("grid_configs/simple1.grd"),
     ]
 
     for grid in grid_paths:
         # Set up the environment and reset it to its initial state
-        env = Environment(
-            grid,
-            no_gui,
-            n_agents=1,
-            agent_start_pos=None,
-            target_fps=fps,
-            sigma=0,
-            random_seed=random_seed,
-            reward_fn=reward_function,
+        # BatteryRelated
+        env = (
+            EnvironmentBattery(
+                grid,
+                battery_size=battery_size,
+                no_gui=no_gui,
+                n_agents=1,
+                agent_start_pos=None,
+                target_fps=fps,
+                sigma=0,
+                random_seed=random_seed,
+                reward_fn=battery_reward_function,
+            )
+            if not no_battery
+            else Environment(
+                grid,
+                no_gui=no_gui,
+                n_agents=1,
+                agent_start_pos=None,
+                target_fps=fps,
+                sigma=0,
+                random_seed=random_seed,
+                reward_fn=reward_function,
+            )
         )
         obs, info = env.get_observation()
 
@@ -127,13 +210,16 @@ def main(
         agents = [
             DeepQAgent(
                 agent_number=0,
-                learning_rate=0.01,
-                gamma=0.95,
+                learning_rate=0.00001,
+                gamma=0.9,
                 epsilon_decay=0.001,
-                memory_size=1000,
-                batch_size=100,
-                tau=0.05,
+                memory_size=100000,
+                batch_size=32,
+                tau=0.1,
+                epsilon_stop=0.3,
+                battery_size=battery_size,
             ),
+            # QAgent(0)
         ]
 
         # Iterate through each agent for `iters` iterations
@@ -147,18 +233,41 @@ def main(
                 action = agent.take_action(obs, info)
                 old_state = info["agent_pos"][agent.agent_number]
 
+                # BatteryRelated
+                old_battery_state = info["battery_left"][agent.agent_number]
+
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
                 new_state = info["agent_pos"][agent.agent_number]
 
+                # print("info: ", info)
+                # print("world_stats: ", env.world_stats)
+                # print("reward: ", reward)
+
                 converged = agent.process_reward(
-                    obs, info, reward, old_state, new_state, action
+                    obs,
+                    info,
+                    reward,
+                    old_state,
+                    new_state,
+                    action,
+                    old_battery_state,
+                    terminated,
                 )
+                # converged = agent.process_reward(
+                #     obs,
+                #     info,
+                #     reward,
+                #     old_state,
+                #     new_state,
+                #     action,
+                # )
 
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
+                    print("Terminated")
 
                 # Early stopping criterion.
                 if converged:
@@ -166,9 +275,18 @@ def main(
 
             agent.eps = 0
             obs, info, world_stats = env.reset()
-            print(world_stats)
 
-            Environment.evaluate_agent(
+            # BatteryRelated
+            EnvironmentBattery.evaluate_agent(
+                grid,
+                [agent],
+                1000,
+                out,
+                sigma=0,
+                agent_start_pos=None,
+                custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+                battery_size=battery_size,
+            ) if not no_battery else Environment.evaluate_agent(
                 grid,
                 [agent],
                 1000,
@@ -187,4 +305,6 @@ if __name__ == "__main__":
         args.fps,
         args.out,
         args.random_seed,
+        args.battery_size,  # BatteryRelated
+        args.no_battery,  # BatteryRelated
     )
