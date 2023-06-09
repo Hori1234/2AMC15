@@ -24,7 +24,7 @@ All changes in the `train_deep_q.py` file related to the battery are marked with
 - The agent always starts the run at the charger
 - The reward function is different (also see the note at the bottom of this ReadME)
 - If the agent runs out of battery while walking around the room, the battery is recharged to full capacity in order to be able to continue the training, however the agent receives a very negative reward in order to discourage this behaviour.
-- If the agent goes to the charger when not all dirt is gone, the battery is recharged to full capacity in just 1 step (i guess we first make sure everything works like this, if it does me might make some tweaks to do this as we discussed after the meeting with the tutor). Other than that, this is treated as a normal move (with this I mean that agent_moved = True and total_agent_moves += 1).
+- If the agent goes to the charger when not all dirt is gone, the battery is recharged to full capacity in just 1 step (i guess we first make sure everything works like this, if it does me might make some tweaks to this as we discussed after the meeting with the tutor). Other than that, this is treated as a normal move (with this I mean that agent_moved = True and total_agent_moves += 1).
 
 ## New info/world_stats variables related to battery
 
