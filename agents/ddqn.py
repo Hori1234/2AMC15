@@ -134,27 +134,25 @@ class DDQNAgent:
         loss.backward()
         self.optimizer.step()
 
-        target_net_state_dict   = self.target_network.state_dict()
-        q_net_state_dict        = self.q_network.state_dict()
+    def update_target_network(self):
+        target_net_state_dict = self.target_network.state_dict()
+        q_net_state_dict = self.q_network.state_dict()
         for key in target_net_state_dict:
-            target_net_state_dict[key] = (1 - self.tau) * target_net_state_dict[key] + self.tau * q_net_state_dict[key]
+            target_net_state_dict[key] = (1 - self.tau) * target_net_state_dict[
+                key
+            ] + self.tau * q_net_state_dict[key]
         self.target_network.load_state_dict(target_net_state_dict)
 
-    def update_target_network(self):
-        self.target_network.load_state_dict(self.q_network.state_dict())
-
     def decay_epsilon(self, episode):
-        
-        self.epsilon = self.max_epsilon * (1- episode /100000)
-        #keep a constant epsilon of 0.2
-        #self.epsilon = 0.2
-
+        # self.epsilon = self.max_epsilon * (1 - episode / 100000)
+        # keep a constant epsilon of 0.2
+        # self.epsilon = 0.2
 
         # self.epsilon *= decay_rate
         # print(self.epsilon)
-        # self.epsilon = self.min_epsilon + (
-        #     self.max_epsilon - self.min_epsilon
-        # ) * np.exp(-self.epsilon_decay * episode)
+        self.epsilon = self.min_epsilon + (
+            self.max_epsilon - self.min_epsilon
+        ) * np.exp(-self.epsilon_decay * episode)
 
     def save_model(self, path):
         print("model_saved")

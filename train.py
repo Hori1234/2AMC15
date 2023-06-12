@@ -144,7 +144,7 @@ def main(
             agents = [
                 DDQNAgent(
                     0,
-                    state_size=obs.shape[0] * obs.shape[1] +2,
+                    state_size=obs.shape[0] * obs.shape[1] + 2,
                     action_size=4,
                     hidden_size=64,
                     learning_rate=0.001,
@@ -171,31 +171,29 @@ def main(
                     # old_state = info["agent_pos"][agent.agent_number]
 
                     # Combine the info of the agent position with the observation in one np.array
-                    #print(obs)
+                    # print(obs)
                     obs = obs_to_dirtstate(obs)
-                    #print(obs)
+                    # print(obs)
                     old_state = np.concatenate((obs.flatten(), info["agent_pos"][0]))
                     action = agent.take_action(obs, info)
 
                     # The action is performed in the environment
                     obs, reward, terminated, info = env.step([action])
-                    #print(obs)
+                    # print(obs)
                     obs = obs_to_dirtstate(obs)
-                    #print(obs)
+                    # print(obs)
                     new_state = np.concatenate((obs.flatten(), info["agent_pos"][0]))
 
                     if type(agent).__name__ == "DDQNAgent":
                         # check if teh algorithm converged
-                        #print("the old state which is used to call process_reward is: ", old_state)
+                        # print("the old state which is used to call process_reward is: ", old_state)
                         converged = agent.process_reward(
                             obs, info, reward, old_state, new_state, action, terminated
                         )
                         # perform a replay step
                         agent.replay(batch_size)
                         # Update the target network periodically
-                        if i % target_update_freq == 0:
-                            # print("Target Network Updated")
-                            agent.update_target_network()
+                        agent.update_target_network()
                         # decay the value of epsioone
                         agent.decay_epsilon(i)
                     else:
@@ -217,8 +215,8 @@ def main(
                     agent.update_policy(optimal=True)
                 if type(agent).__name__ == "Policy_iteration":
                     agent.dirty_tiles = []
-                
-                #save the model of the agent for later use
+
+                # save the model of the agent for later use
                 agent.save_model(fname)
                 Environment.evaluate_agent(
                     grid,
@@ -229,6 +227,7 @@ def main(
                     agent_start_pos=[(1, 1)],
                     custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
                 )
+
 
 def obs_to_dirtstate(obs):
     """Converts the observation to a dirt state"""
