@@ -219,7 +219,6 @@ def main(
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
-            # QAgent(0)
         ]
 
         # Iterate through each agent for `iters` iterations
@@ -240,10 +239,6 @@ def main(
                 obs, reward, terminated, info = env.step([action])
                 new_state = info["agent_pos"][agent.agent_number]
 
-                # print("info: ", info)
-                # print("world_stats: ", env.world_stats)
-                # print("reward: ", reward)
-
                 converged = agent.process_reward(
                     obs,
                     info,
@@ -254,14 +249,6 @@ def main(
                     old_battery_state,
                     terminated,
                 )
-                # converged = agent.process_reward(
-                #     obs,
-                #     info,
-                #     reward,
-                #     old_state,
-                #     new_state,
-                #     action,
-                # )
 
                 # If the agent is terminated, we reset the env.
                 if terminated:
