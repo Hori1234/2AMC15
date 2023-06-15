@@ -113,7 +113,7 @@ def reward_function(grid: Grid, info: dict) -> float:
 
 
 # BatteryRelated
-def battery_reward_function(grid: Grid, info: dict) -> float:
+def battery_reward_function(grid: Grid, info: dict, agent_number: int) -> float:
     """
     Custom reward function used in the Battery Environment.
 
@@ -126,7 +126,7 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
     cleaning is punished a little. Cleaning dirt is rewarded.
     """
     # Agent at charger
-    if info["agent_charging"][0] == True:
+    if info["agent_charging"][agent_number] == True:
         # Reward if at charger after cleaning everything
         if grid.sum_dirt() == 0:
             return float(20)
@@ -140,11 +140,11 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
         #     return float(20)
 
     # punish heavily for running out of battery
-    elif info["battery_left"][0] == 0:
+    elif info["battery_left"][agent_number] == 0:
         return float(-100)
 
     # punish for staying at the same location
-    elif info["agent_moved"][0] == False:
+    elif info["agent_moved"][agent_number] == False:
         return float(-50)
 
     # punish a little for moving without cleaning
@@ -169,7 +169,8 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        Path("grid_configs/20-10-grid.grd"),
+        Path("grid_configs/10x10_2_charge.grd"),
+        #Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
@@ -185,7 +186,7 @@ def main(
                 grid,
                 battery_size=battery_size,
                 no_gui=no_gui,
-                n_agents=1,
+                n_agents=2,
                 agent_start_pos=None,
                 target_fps=fps,
                 sigma=0,
@@ -196,7 +197,7 @@ def main(
             else Environment(
                 grid,
                 no_gui=no_gui,
-                n_agents=1,
+                n_agents=2,
                 agent_start_pos=None,
                 target_fps=fps,
                 sigma=0,
@@ -219,25 +220,45 @@ def main(
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
+            DeepQAgent(
+                agent_number=1,
+                learning_rate=0.00001,
+                gamma=0.9,
+                epsilon_decay=0.001,
+                memory_size=100000,
+                batch_size=32,
+                tau=0.1,
+                epsilon_stop=0.3,
+                battery_size=battery_size,
+            ),
+            # QAgent(0)
         ]
-
+        agent1 = agents[0]
+        agent2 = agents[1]
         # Iterate through each agent for `iters` iterations
-        for agent in agents:
-            fname = f"{type(agent).__name__}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
-
-            print("Agent is ", type(agent).__name__, " gamma is ", agent.gamma)
-
-            for i in trange(iters):
+        # for agent in agents:
+        fname = f"{type(agent1).__name__}-gamma-{agent1.gamma}-n_iters{iters}-time-{time.time()}"
+        #
+        print("Agent is ", type(agent1).__name__, " gamma is ", agent1.gamma)
+        agents = [agent1, agent2]
+        actions = [4]*len(agents)
+        for i in trange(iters):
+            for agent in agents:
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
+                actions[agent.agent_number] = action
                 old_state = info["agent_pos"][agent.agent_number]
 
                 # BatteryRelated
                 old_battery_state = info["battery_left"][agent.agent_number]
 
                 # The action is performed in the environment
-                obs, reward, terminated, info = env.step([action])
+                obs, reward, terminated, info = env.step(actions, agent.agent_number)
                 new_state = info["agent_pos"][agent.agent_number]
+
+                # print("info: ", info)
+                # print("world_stats: ", env.world_stats)
+                # print("reward: ", reward)
 
                 converged = agent.process_reward(
                     obs,
@@ -255,33 +276,43 @@ def main(
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
                     print("Terminated")
+                    print(agent1.tile_state)
+                    print(agent2.tile_state)
+                    print(agent1.dirty_tiles)
+                    print(agent2.dirty_tiles)
+                if reward == 5 and len(agents) > 1:
+                    print("ja")
+                    for other_agent in agents:
+                        if agent != other_agent:
+                            other_agent.update_agent(agent.dirty_tiles, agent.tile_state)
 
                 # Early stopping criterion.
                 if converged:
                     break
 
-            agent.eps = 0
-            obs, info, world_stats = env.reset()
+        agent1.eps = 0
+        agent2.eps = 0
+        obs, info, world_stats = env.reset()
 
-            # BatteryRelated
-            EnvironmentBattery.evaluate_agent(
-                grid,
-                [agent],
-                1000,
-                out,
-                sigma=0,
-                agent_start_pos=None,
-                custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
-                battery_size=battery_size,
-            ) if not no_battery else Environment.evaluate_agent(
-                grid,
-                [agent],
-                1000,
-                out,
-                sigma=0,
-                agent_start_pos=None,
-                custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
-            )
+        # BatteryRelated
+        EnvironmentBattery.evaluate_agent(
+            grid,
+            [agent1, agent2],
+            1000,
+            out,
+            sigma=0,
+            agent_start_pos=None,
+            custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+            battery_size=battery_size,
+        ) if not no_battery else Environment.evaluate_agent(
+            grid,
+            [agent1, agent2],
+            1000,
+            out,
+            sigma=0,
+            agent_start_pos=None,
+            custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+        )
 
 
 if __name__ == "__main__":

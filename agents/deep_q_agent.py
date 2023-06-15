@@ -86,6 +86,7 @@ class DeepQAgent(BaseAgent):
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
+        print(n_of_states)
         self.policy_net = DQN(n_of_states, n_actions).to(device)
         self.target_net = DQN(n_of_states, n_actions).to(device)
         # Copy the weights of the policy network to the target network.
@@ -287,3 +288,7 @@ class DeepQAgent(BaseAgent):
                 key
             ] * self.tau + target_net_state_dict[key] * (1 - self.tau)
         self.target_net.load_state_dict(target_net_state_dict)
+    def update_agent(self,dirty_tales,tile_state):
+        ##Update dirty_tales and tile_state
+        self.dirty_tiles = copy(dirty_tales)
+        self.tile_state = copy(tile_state)

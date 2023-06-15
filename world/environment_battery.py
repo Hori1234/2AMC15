@@ -109,7 +109,7 @@ class EnvironmentBattery:
 
         # Initialize battery
         self.battery_size = battery_size
-        self.battery_left = battery_size
+        self.battery_left = [self.battery_size]*n_agents
 
         # Set up reward function
         if reward_fn is None:
@@ -165,10 +165,10 @@ class EnvironmentBattery:
     def _initialize_agent_pos(self):
         """Initializes agent position at the charger."""
         charger_loc = np.where(self.grid.cells == 4)
-
-        cx, cy = charger_loc[0][0], charger_loc[1][0]
-
-        self.agent_pos = [(cx, cy)]
+        self.agent_pos = []
+        for agent in range(self.n_agents):
+            cx, cy = charger_loc[0][agent], charger_loc[1][agent]
+            self.agent_pos.append((cx, cy))
 
     def get_observation(self):  # -> [np.ndarray, dict]:
         """Gets the current observation and information.
@@ -194,7 +194,7 @@ class EnvironmentBattery:
         >>> observation, env_info = e.get_observation()
         >>> # Reset the environment, but for this training episode, we want
         >>> # to use 2 agents.
-        >>> observation, env_info, world_stats = e.reset(n_agents=2)
+        >>> observation, env_info, world_stats = e.reset(n_agents=self.n_agents)
 
         Args:
             **kwargs: possible keyword options are the same as those for
@@ -240,8 +240,8 @@ class EnvironmentBattery:
         self._initialize_agent_pos()
         self.info = self._reset_info()
         self.world_stats = self._reset_world_stats()
-        self.battery_left = self.battery_size
-        self.info["battery_left"] = [self.battery_left] * self.n_agents
+        self.battery_left = [self.battery_size]*self.n_agents
+        self.info["battery_left"] = self.battery_left
         if not self.no_gui:
             self.gui = EnvironmentGUI(self.grid.cells.shape)
             self.gui.reset()
@@ -295,9 +295,8 @@ class EnvironmentBattery:
                     self.info["agent_charging"][agent_id] = True
                     self.world_stats["total_agents_at_charger"] += 1
                 else:
-                    self.battery_left = (
-                        self.battery_size + 1
-                    )  # -1 because after calling this function 1 will be subtracted again
+                    self.battery_left[agent_id] += 1
+                     # -1 because after calling this function 1 will be subtracted again
                     self.info["agent_moved"][agent_id] = True
                     self.world_stats["total_agent_moves"] += 1
                     self.info["quick_charging"][agent_id] = True
@@ -309,7 +308,7 @@ class EnvironmentBattery:
                     f"{new_pos}."
                 )
 
-    def step(self, actions: list[int]):  # -> [np.ndarray, float, bool, dict]:
+    def step(self, actions: list[int], agent_number: int):  # -> [np.ndarray, float, bool, dict]:
         """This function makes the agent take a step on the grid.
 
         Actions are provided as a list of integers. The integer values are:
@@ -367,8 +366,8 @@ class EnvironmentBattery:
 
         for i, action in enumerate(actions):
             # Reset battery if empty, and register that we had an empty battery in self.info
-            if self.battery_left == 0:
-                self.battery_left = self.battery_size
+            if self.battery_left[i] == 0:
+                self.battery_left[i] = self.battery_size
                 self.world_stats["empty_battery_counter"] += 1
 
             if self.agent_done[i]:
@@ -409,13 +408,13 @@ class EnvironmentBattery:
             # Always do this, battery cannot be 0 at this point anymore
             # due to check at start of this function
             self._move_agent(new_pos, i)
-            self.battery_left -= 1
+            self.battery_left[i] -= 1
 
             # I feel like we would want to know the state of the
             # battery both while running around on the grid,
             # hence I add it to self.info), and at the end
             # in the stats report, hence I add it to self.world_stats
-            self.info["battery_left"] = [self.battery_left]
+            self.info["battery_left"] = self.battery_left
             self.world_stats["battery_left"] = self.battery_left
 
             # set agent_moved to false if actual_action is stand_still
@@ -423,7 +422,7 @@ class EnvironmentBattery:
                 self.info["agent_moved"][i] = False
 
         # Update the grid with the new agent positions and calculate the reward
-        reward = self.reward_fn(self.grid, self.info)
+        reward = self.reward_fn(self.grid, self.info, agent_number)
 
         terminal_state = sum(self.agent_done) == self.n_agents
 
