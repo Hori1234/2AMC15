@@ -1,10 +1,8 @@
-import math
 import random
 
 # import matplotlib
 # import matplotlib.pyplot as plt
 from collections import namedtuple, deque
-from itertools import count
 from random import randint
 from copy import copy
 
@@ -14,7 +12,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 # if GPU is to be used
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.backends.cuda.is_built() and torch.cuda.is_available() else "cpu")
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
@@ -215,7 +213,7 @@ class DeepQAgent(BaseAgent):
             # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
-                return self.policy_net(torch.tensor(state).float()).max(0)[1]
+                return self.policy_net(torch.tensor(state).float().to(device)).max(0)[1]
         else:
             return randint(0, 3)
 
