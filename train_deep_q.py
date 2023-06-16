@@ -169,12 +169,12 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        Path("grid_configs/20-10-grid.grd"),
+        # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
-        # Path("grid_configs/simple1.grd"),
+        Path("grid_configs/simple1.grd"),
     ]
 
     for grid in grid_paths:
@@ -212,7 +212,7 @@ def main(
                 agent_number=0,
                 learning_rate=0.00001,
                 gamma=0.9,
-                epsilon_decay=0.001,
+                epsilon_decay=0.0005,
                 memory_size=100000,
                 batch_size=32,
                 tau=0.1,
@@ -237,17 +237,14 @@ def main(
 
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
-                new_state = info["agent_pos"][agent.agent_number]
 
                 converged = agent.process_reward(
                     obs,
                     info,
                     reward,
                     old_state,
-                    new_state,
                     action,
                     old_battery_state,
-                    terminated,
                 )
 
                 # If the agent is terminated, we reset the env.

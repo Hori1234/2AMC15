@@ -101,10 +101,8 @@ class DeepQAgent(BaseAgent):
         info: None | dict,
         reward: float,
         old_state: tuple,
-        new_state: tuple,
         action: int,
         old_battery_state: int,
-        terminated: bool
     ):
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
@@ -119,7 +117,7 @@ class DeepQAgent(BaseAgent):
         if not self.first_run:
             # Create the state vector of the current state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
-            clear_state[new_state[0], new_state[1]] = 1
+            clear_state[x, y] = 1
             new_battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
             new_state = list(clear_state.flatten()) + self.tile_state + new_battery_state
 
