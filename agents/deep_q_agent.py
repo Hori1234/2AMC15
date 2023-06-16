@@ -86,7 +86,6 @@ class DeepQAgent(BaseAgent):
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
-        print(n_of_states)
         self.policy_net = DQN(n_of_states, n_actions).to(device)
         self.target_net = DQN(n_of_states, n_actions).to(device)
         # Copy the weights of the policy network to the target network.
@@ -131,12 +130,15 @@ class DeepQAgent(BaseAgent):
             old_state = list(clear_state.flatten()) + old_tile_state + old_battery_state
 
             # Turn the variables into tensors for the neural network.
+            #print(self.agent_number)
             old_state = torch.tensor(
                 old_state, dtype=torch.float32, device=device
             ).unsqueeze(0)
+            #print(old_state.shape)
             new_state = torch.tensor(
                 new_state, dtype=torch.float32, device=device
             ).unsqueeze(0)
+            #print(new_state.shape)
             reward = torch.tensor([reward], device=device)
             action = torch.tensor([[action]], device=device, dtype=torch.long)
 
@@ -148,7 +150,7 @@ class DeepQAgent(BaseAgent):
 
         # print(observation)
 
-        if info["agent_charging"][self.agent_number] == True and (3 not in observation):
+        if terminated:
             # If the agent is charging and all dirty tiles have been cleaned, 
             # the episode has ended and update the epsilon value for the subsequent episode.
             self.eps = max(0, self.eps - self.ed)
@@ -158,6 +160,7 @@ class DeepQAgent(BaseAgent):
                 # If this was the first run, determine the size of the input layer of the neural network.
                 # The state space is increased by 1 for the battery state.
                 state_space = self.w * self.h + len(self.tile_state) + 1
+                print(state_space)
                 # state_space = 2+len(self.tile_state)
                 # print(f'State space: {state_space}')
                 # Initialize the neural network.
@@ -211,6 +214,7 @@ class DeepQAgent(BaseAgent):
         # If the sample is bigger than epsilon, exploit the neural network, otherwise return a random move.
         if eps > self.eps:
             # Create the input layer of the neural network.
+            print("exploiting")
             state = np.zeros((self.h, self.w), dtype=np.uint8)
             state[x][y] = 1
             battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
@@ -242,7 +246,8 @@ class DeepQAgent(BaseAgent):
             device=device,
             dtype=torch.bool,
         )
-        # print(np.shape(batch.next_state[1]))
+        print(self.agent_number)
+        print(np.shape(batch.next_state[1]))
         # print()
         non_final_next_states = torch.cat(
             [s for s in batch.next_state if s is not None]
@@ -288,7 +293,26 @@ class DeepQAgent(BaseAgent):
                 key
             ] * self.tau + target_net_state_dict[key] * (1 - self.tau)
         self.target_net.load_state_dict(target_net_state_dict)
-    def update_agent(self,dirty_tales,tile_state):
+    def update_agent(self,dirty_tales,tile_state, terminated):
         ##Update dirty_tales and tile_state
         self.dirty_tiles = copy(dirty_tales)
         self.tile_state = copy(tile_state)
+        if terminated:
+            self.eps = max(0, self.eps - self.ed)
+            # Also, all the dirty tiles are reset so the tile state should only contain 1's.
+            self.tile_state = [1 for i in range(len(self.tile_state))]
+            if self.first_run:
+                # If this was the first run, determine the size of the input layer of the neural network.
+                # The state space is increased by 1 for the battery state.
+                state_space = self.w * self.h + len(self.tile_state) + 1
+                print(state_space)
+                # state_space = 2+len(self.tile_state)
+                # print(f'State space: {state_space}')
+                # Initialize the neural network.
+                self.initialize_network(state_space, 4)
+                # The first run is over so set the first run boolean to False.
+                self.first_run = False
+        else:
+            self.tile_state = copy(tile_state)
+            if self.first_run:
+                self.dirty_tiles = copy(dirty_tales)

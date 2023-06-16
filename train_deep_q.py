@@ -276,15 +276,10 @@ def main(
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
                     print("Terminated")
-                    print(agent1.tile_state)
-                    print(agent2.tile_state)
-                    print(agent1.dirty_tiles)
-                    print(agent2.dirty_tiles)
-                if reward == 5 and len(agents) > 1:
-                    print("ja")
+                if (reward == 5 and len(agents) > 1) or terminated:
                     for other_agent in agents:
-                        if agent != other_agent:
-                            other_agent.update_agent(agent.dirty_tiles, agent.tile_state)
+                        if other_agent != agent:
+                            other_agent.update_agent(agent.dirty_tiles, agent.tile_state, terminated)
 
                 # Early stopping criterion.
                 if converged:
