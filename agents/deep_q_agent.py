@@ -92,7 +92,7 @@ class DeepQAgent(BaseAgent):
         self.first_run = True
 
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.device = torch.device("cuda")
+        self.device = torch.device("cpu")
 
         print("the test will be run on: ", self.device)
         print("CUda current device: ", torch.cuda.current_device())
