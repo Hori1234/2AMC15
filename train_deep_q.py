@@ -57,7 +57,7 @@ def parse_args():
         help="Frames per second to render at. Only used if " "no_gui is not set.",
     )
     p.add_argument(
-        "--iter", type=int, default=100000, help="Number of iterations to go through."
+        "--iter", type=int, default=10000, help="Number of iterations to go through."
     )
     p.add_argument(
         "--random_seed",
@@ -88,7 +88,7 @@ def parse_args():
     return p.parse_args()
 
 
-def reward_function(grid: Grid, info: dict) -> float:
+def reward_function(grid: Grid, info: dict, agent_number: int) -> float:
     """Custom reward function. Punish the agent most for staying at the same
     location. Punish a bit less for moving without cleaning. Reward for cleaning
     dirt and reward the most for going back to the charging station when all dirt
@@ -103,9 +103,9 @@ def reward_function(grid: Grid, info: dict) -> float:
         A single floating point value representing the reward for a given
         action.
     """
-    if info["agent_charging"][0] == True:
+    if info["agent_charging"][agent_number] == True:
         return float(10)
-    elif info["agent_moved"][0] == False:
+    elif info["agent_moved"][agent_number] == False:
         return float(-50)
     elif sum(info["dirt_cleaned"]) < 1:
         return float(-1)

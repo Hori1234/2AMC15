@@ -438,7 +438,7 @@ class EnvironmentBattery:
         return self.grid.cells, reward, terminal_state, self.info
 
     @staticmethod
-    def _default_reward_function(grid: Grid, info: dict) -> float:
+    def _default_reward_function(grid: Grid, info: dict, agent_number: int) -> float:
         """This is the default reward function.
 
         This is a very simple default reward function. It simply checks if any
@@ -529,9 +529,14 @@ class EnvironmentBattery:
             max_steps, desc=f"Evaluating agent" f"{'s' if len(agents) > 1 else ''}"
         ):
             # Get the agent actions
-            actions = [agent.take_action(obs, info) for agent in agents]
+            #actions = [agent.take_action(obs, info) for agent in agents]
             # Take a step in the environment
-            obs, _, terminated, info = env.step(actions)
+
+            for agent in agents:
+                actions = [4] * len(agents)
+                action = agent.take_action(obs, info)
+                actions[agent.agent_number] = action
+                obs, _, terminated, info = env.step(actions, agent.agent_number)
 
             # Save the new agent locations
             for i, pos in enumerate(info["agent_pos"]):
