@@ -91,8 +91,8 @@ class DeepQAgent(BaseAgent):
         self.tile_state = []
         self.first_run = True
 
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cpu")
 
         print("the test will be run on: ", self.device)
         print("CUda current device: ", torch.cuda.current_device())
@@ -241,9 +241,7 @@ class DeepQAgent(BaseAgent):
             # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
-                return self.policy_net(
-                    torch.tensor(state).float().to(self.device).clone().detach()
-                ).max(0)[1]
+                return self.policy_net(state).float().clone().detach().max(0)[1]
         else:
             return randint(0, 3)
 

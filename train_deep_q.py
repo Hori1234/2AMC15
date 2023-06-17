@@ -208,12 +208,12 @@ def main(
                 epsilon_decay=0.001,
                 memory_size=100000,
                 batch_size=32,
-                tau=0,
+                tau=1,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
             DeepQAgent(
-                agent_number=1,
+                agent_number=0,
                 learning_rate=0.00001,
                 gamma=0.9,
                 epsilon_decay=0.001,
@@ -275,7 +275,20 @@ def main(
                     break
 
             agent.eps = 0
-            agent.save_model("./models")
+            agent.save_model(
+                Path(
+                    "models/"
+                    + type(agent).__name__
+                    + "_"
+                    + str(agent.gamma)
+                    + "_"
+                    + str(agent.tau)
+                    + "_"
+                    + "Battery: "
+                    + str(battery_size)
+                    + ".weights"
+                )
+            )
             obs, info, world_stats = env.reset()
 
             EnvironmentBattery.evaluate_agent(
