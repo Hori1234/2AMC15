@@ -18,6 +18,8 @@ try:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.dqn import ODeepQAgent
+
 except ModuleNotFoundError:
     from os import path
     from os import pardir
@@ -34,6 +36,7 @@ except ModuleNotFoundError:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.dqn import ODeepQAgent
 
 
 def parse_args():
@@ -125,6 +128,15 @@ def main(
 
         # add all agents to test
         agents = [
+            # ODeepQAgent(
+            #     agent_number=0,
+            #     learning_rate=0.01,
+            #     gamma=0.95,
+            #     epsilon_decay=0.001,
+            #     memory_size=1000,
+            #     batch_size=100,
+            #     tau=0.05,
+            # ),
             DeepQAgent(
                 agent_number=0,
                 learning_rate=0.01,

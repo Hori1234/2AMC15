@@ -397,11 +397,9 @@ class Environment:
                         min(max_y, self.agent_pos[i][1] + 1),
                     )
                 case 1:  # Move up
-                    new_pos = (self.agent_pos[i][0], max(
-                        0, self.agent_pos[i][1] - 1))
+                    new_pos = (self.agent_pos[i][0], max(0, self.agent_pos[i][1] - 1))
                 case 2:  # Move left
-                    new_pos = (
-                        max(0, self.agent_pos[i][0] - 1), self.agent_pos[i][1])
+                    new_pos = (max(0, self.agent_pos[i][0] - 1), self.agent_pos[i][1])
                 case 3:  # Move right
                     new_pos = (
                         min(max_x, self.agent_pos[i][0] + 1),
@@ -431,8 +429,7 @@ class Environment:
             time_to_wait = self.target_spf - (time() - start_time)
             if time_to_wait > 0:
                 sleep(time_to_wait)
-            self.gui.render(self.grid.cells, self.agent_pos,
-                            self.info, is_single_step)
+            self.gui.render(self.grid.cells, self.agent_pos, self.info, is_single_step)
 
         return self.grid.cells, reward, terminal_state, self.info
 
@@ -548,9 +545,11 @@ class Environment:
         print("Evaluation complete. Results:")
         # File name is the current date and time
         file_name = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
-        out_fp = out_dir / \
-            f"{file_name}.txt" if not custom_file_name else out_dir / \
-            f"{custom_file_name}.txt"
+        out_fp = (
+            out_dir / f"{file_name}.txt"
+            if not custom_file_name
+            else out_dir / f"{custom_file_name}.txt"
+        )
         with open(out_fp, "w") as f:
             for key, value in world_stats.items():
                 f.write(f"{key}: {value}\n")
@@ -559,10 +558,12 @@ class Environment:
         # Save the images
         for i, img in enumerate(path_images):
             img_name = f"{file_name}_agent-{i}"
-            out_fp = out_dir / \
-                f"{img_name}.png" if not custom_file_name else out_dir / \
-                f"{custom_file_name}.png"
-            print('out_fp: ', out_fp, 'custom_file_name: ', custom_file_name)
+            out_fp = (
+                out_dir / f"{img_name}.png"
+                if not custom_file_name
+                else out_dir / f"{custom_file_name}.png"
+            )
+            print("out_fp: ", out_fp, "custom_file_name: ", custom_file_name)
             img.save(out_fp)
             if show_images:
                 img.show(f"Agent {i} Path Frequency")
@@ -577,9 +578,7 @@ if __name__ == "__main__":
     base_grid_fp = Path(
         "C:/Users/20173850/Documents/2AMC15/Assignment/GitHub/2AMC15-2023-DIC/grid_configs/testroom.grd"
     )
-    envi = Environment(
-        base_grid_fp, False, 1, target_fps=5
-    )
+    envi = Environment(base_grid_fp, False, 1, target_fps=5)
     observe, inf = envi.get_observation()
 
     # Observe:
