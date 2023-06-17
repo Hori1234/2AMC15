@@ -13,8 +13,6 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-# if GPU is to be used
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
@@ -45,6 +43,7 @@ class DQN(nn.Module):
     # Called with either one element to determine next action, or a batch
     # during optimization.
     def forward(self, x):
+        # x = x.to(next(self.parameters()).device)
         x = F.leaky_relu(self.layer1(x))
         # x = self.dropout(x)
         x = F.leaky_relu(self.layer2(x))
@@ -61,7 +60,18 @@ from agents import BaseAgent
 
 
 class DeepQAgent(BaseAgent):
-    def __init__(self, agent_number, battery_size, learning_rate=0.01, gamma=0.95, epsilon_decay=0.01, memory_size=1000, batch_size=100, tau=0.05, epsilon_stop=0.1):
+    def __init__(
+        self,
+        agent_number,
+        battery_size,
+        learning_rate=0.01,
+        gamma=0.95,
+        epsilon_decay=0.01,
+        memory_size=1000,
+        batch_size=100,
+        tau=0.05,
+        epsilon_stop=0.1,
+    ):
         """Chooses an action based on learned q learning policy.
 
         Args:
@@ -80,14 +90,21 @@ class DeepQAgent(BaseAgent):
         self.dirty_tiles = []
         self.tile_state = []
         self.first_run = True
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # self.device = torch.device("cpu")
+
+        print("the test will be run on: ", self.device)
+        print("CUda current device: ", torch.cuda.current_device())
+
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
         self.battery_size = battery_size
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
-        self.policy_net = DQN(n_of_states, n_actions).to(device)
-        self.target_net = DQN(n_of_states, n_actions).to(device)
+        self.policy_net = DQN(n_of_states, n_actions).to(self.device)
+        self.target_net = DQN(n_of_states, n_actions).to(self.device)
         # Copy the weights of the policy network to the target network.
         self.target_net.load_state_dict(self.policy_net.state_dict())
         # Initialize the optimizer.
@@ -104,43 +121,44 @@ class DeepQAgent(BaseAgent):
         new_state: tuple,
         action: int,
         old_battery_state: int,
-        terminated: bool
+        terminated: bool,
     ):
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
+
         # Copy the old tile state to a new variable
         old_tile_state = copy(self.tile_state)
 
         if sum(info["dirt_cleaned"]) == 1 and (x, y) not in self.dirty_tiles:
             # If the agent cleans a dirt tile which it has not yet saved in its memory (self.dirty_tiles), run updateTileState().
-            x, y = info["agent_pos"][self.agent_number]
             old_tile_state = self.updateTileShape(x, y, old_tile_state)
-            #print("ja")
 
         if not self.first_run:
             # Create the state vector of the current state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[new_state[0], new_state[1]] = 1
-            new_battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
-            new_state = list(clear_state.flatten()) + self.tile_state + new_battery_state
+            new_battery_state = [
+                info["battery_left"][self.agent_number] / self.battery_size
+            ]
+            new_state = (
+                list(clear_state.flatten()) + self.tile_state + new_battery_state
+            )
 
             # Create the state vector of the previous state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[old_state[0], old_state[1]] = 1
-            old_battery_state = [old_battery_state/self.battery_size]
+            old_battery_state = [old_battery_state / self.battery_size]
             old_state = list(clear_state.flatten()) + old_tile_state + old_battery_state
+
             # Turn the variables into tensors for the neural network.
-            #print(self.agent_number)
             old_state = torch.tensor(
-                old_state, dtype=torch.float32, device=device
+                old_state, dtype=torch.float32, device=self.device
             ).unsqueeze(0)
-            #print(old_state.shape)
             new_state = torch.tensor(
-                new_state, dtype=torch.float32, device=device
+                new_state, dtype=torch.float32, device=self.device
             ).unsqueeze(0)
-            #print(new_state.shape)
-            reward = torch.tensor([reward], device=device)
-            action = torch.tensor([[action]], device=device, dtype=torch.long)
+            reward = torch.tensor([reward], device=self.device)
+            action = torch.tensor([[action]], device=self.device, dtype=torch.long)
 
             # Push the tuple into the memory of the agent.
             self.memory.push(old_state, action, new_state, reward)
@@ -150,8 +168,8 @@ class DeepQAgent(BaseAgent):
 
         # print(observation)
 
-        if terminated:
-            # If the agent is charging and all dirty tiles have been cleaned, 
+        if info["agent_charging"][self.agent_number] == True and (3 not in observation):
+            # If the agent is charging and all dirty tiles have been cleaned,
             # the episode has ended and update the epsilon value for the subsequent episode.
             self.eps = max(0, self.eps - self.ed)
             # Also, all the dirty tiles are reset so the tile state should only contain 1's.
@@ -213,15 +231,17 @@ class DeepQAgent(BaseAgent):
         # If the sample is bigger than epsilon, exploit the neural network, otherwise return a random move.
         if eps > self.eps:
             # Create the input layer of the neural network.
-            print("exploiting")
             state = np.zeros((self.h, self.w), dtype=np.uint8)
             state[x][y] = 1
-            battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
+            battery_state = [
+                info["battery_left"][self.agent_number] / self.battery_size
+            ]
             state = list(state.flatten()) + self.tile_state + battery_state
+            state = torch.tensor(state, dtype=torch.float32).flatten().to(self.device)
             # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
-                return self.policy_net(torch.tensor(state).float()).max(0)[1]
+                return self.policy_net(state).float().clone().detach().max(0)[1]
         else:
             return randint(0, 3)
 
@@ -242,9 +262,10 @@ class DeepQAgent(BaseAgent):
         # (a final state would've been the one after which simulation ended)
         non_final_mask = torch.tensor(
             tuple(map(lambda s: s is not None, batch.next_state)),
-            device=device,
+            device=self.device,
             dtype=torch.bool,
         )
+        # print(np.shape(batch.next_state[1]))
         # print()
         non_final_next_states = torch.cat(
             [s for s in batch.next_state if s is not None]
@@ -263,7 +284,7 @@ class DeepQAgent(BaseAgent):
         # on the "older" target_net; selecting their best reward with max(1)[0].
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_state_values = torch.zeros(self.batch_size, device=device)
+        next_state_values = torch.zeros(self.batch_size, device=self.device)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_net(
                 non_final_next_states
@@ -290,7 +311,18 @@ class DeepQAgent(BaseAgent):
                 key
             ] * self.tau + target_net_state_dict[key] * (1 - self.tau)
         self.target_net.load_state_dict(target_net_state_dict)
-    def update_agent(self,dirty_tales,tile_state, terminated):
+
+    def save_model(self, path):
+        print("model_saved")
+        torch.save(self.policy_net.state_dict(), path)
+
+    def load_model(self, path):
+        self.policy_net.load_state_dict(torch.load(path))
+        self.policy_net.eval()
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.eval()
+
+    def update_agent(self, dirty_tales, tile_state, terminated):
         ##Update dirty_tales and tile_state
         self.dirty_tiles = copy(dirty_tales)
         self.tile_state = copy(tile_state)
