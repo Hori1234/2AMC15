@@ -223,7 +223,6 @@ def main(
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
-            # QAgent(0)
         ]
 
         # Iterate through each agent for `iters` iterations
@@ -276,6 +275,7 @@ def main(
                     break
 
             agent.eps = 0
+            agent.save_model("./models")
             obs, info, world_stats = env.reset()
 
             EnvironmentBattery.evaluate_agent(
