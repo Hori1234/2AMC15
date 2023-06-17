@@ -15,7 +15,7 @@ import torch.nn.functional as F
 
 # if GPU is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+print(device)
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
 
@@ -45,6 +45,7 @@ class DQN(nn.Module):
     # Called with either one element to determine next action, or a batch
     # during optimization.
     def forward(self, x):
+        x = x.to(next(self.parameters()).device)
         x = F.leaky_relu(self.layer1(x))
         # x = self.dropout(x)
         x = F.leaky_relu(self.layer2(x))
@@ -61,7 +62,18 @@ from agents import BaseAgent
 
 
 class DeepQAgent(BaseAgent):
-    def __init__(self, agent_number, battery_size, learning_rate=0.01, gamma=0.95, epsilon_decay=0.01, memory_size=1000, batch_size=100, tau=0.05, epsilon_stop=0.1):
+    def __init__(
+        self,
+        agent_number,
+        battery_size,
+        learning_rate=0.01,
+        gamma=0.95,
+        epsilon_decay=0.01,
+        memory_size=1000,
+        batch_size=100,
+        tau=0.05,
+        epsilon_stop=0.1,
+    ):
         """Chooses an action based on learned q learning policy.
 
         Args:
@@ -104,7 +116,7 @@ class DeepQAgent(BaseAgent):
         new_state: tuple,
         action: int,
         old_battery_state: int,
-        terminated: bool
+        terminated: bool,
     ):
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
@@ -120,13 +132,17 @@ class DeepQAgent(BaseAgent):
             # Create the state vector of the current state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[new_state[0], new_state[1]] = 1
-            new_battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
-            new_state = list(clear_state.flatten()) + self.tile_state + new_battery_state
+            new_battery_state = [
+                info["battery_left"][self.agent_number] / self.battery_size
+            ]
+            new_state = (
+                list(clear_state.flatten()) + self.tile_state + new_battery_state
+            )
 
             # Create the state vector of the previous state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[old_state[0], old_state[1]] = 1
-            old_battery_state = [old_battery_state/self.battery_size]
+            old_battery_state = [old_battery_state / self.battery_size]
             old_state = list(clear_state.flatten()) + old_tile_state + old_battery_state
 
             # Turn the variables into tensors for the neural network.
@@ -148,7 +164,7 @@ class DeepQAgent(BaseAgent):
         # print(observation)
 
         if info["agent_charging"][self.agent_number] == True and (3 not in observation):
-            # If the agent is charging and all dirty tiles have been cleaned, 
+            # If the agent is charging and all dirty tiles have been cleaned,
             # the episode has ended and update the epsilon value for the subsequent episode.
             self.eps = max(0, self.eps - self.ed)
             # Also, all the dirty tiles are reset so the tile state should only contain 1's.
@@ -212,12 +228,14 @@ class DeepQAgent(BaseAgent):
             # Create the input layer of the neural network.
             state = np.zeros((self.h, self.w), dtype=np.uint8)
             state[x][y] = 1
-            battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
+            battery_state = [
+                info["battery_left"][self.agent_number] / self.battery_size
+            ]
             state = list(state.flatten()) + self.tile_state + battery_state
             # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
-                return self.policy_net(torch.tensor(state).float()).max(0)[1]
+                return self.policy_net(torch.tensor(state).float()).to(device).max(0)[1]
         else:
             return randint(0, 3)
 
