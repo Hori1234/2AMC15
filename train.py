@@ -17,6 +17,7 @@ import time
 TWO_EXPERIMENTS_SIGMA = 0
 
 try:
+    from world import EnvironmentBattery
     from world import Environment
     from world.grid import Grid
 
@@ -36,6 +37,7 @@ except ModuleNotFoundError:
     if root_path not in sys.path:
         sys.path.extend(root_path)
 
+    from world import EnvironmentBattery
     from world import Environment
 
     # Add your agents here
@@ -71,6 +73,17 @@ def parse_args():
         help="Where to save training results.",
     )
 
+    p.add_argument(
+        "--battery_size",
+        type=int,
+        default=1000,
+        help="Number of actions the agent can take before it needs to recharge.",
+    )
+
+    p.add_argument(
+        "--no_battery", action="store_true", help="Disables the battery feature."
+    )
+
     return p.parse_args()
 
 
@@ -99,65 +112,102 @@ def reward_function(grid: Grid, info: dict) -> float:
         return float(5)
 
 
+def battery_reward_function(grid: Grid, info: dict) -> float:
+    """
+    Custom reward function used in the Battery Environment.
+
+    The agent is punished most if he runs out of battery. If the agent
+    goes to the charger, this is rewarded if the agent has cleaned all
+    dirt or if the agent has low battery. If the agent goes to the charger
+    with enough battery left, without having cleaned all dirt, this is punished.
+
+    Furthermore, staying at the same location is punished and moving without
+    cleaning is punished a little. Cleaning dirt is rewarded.
+    """
+    # Agent at charger
+    if info["agent_charging"][0] == True:
+        # Reward if at charger after cleaning everything
+        if grid.sum_dirt() == 0:
+            return float(20)
+
+        # punished for going to charger with enough battery left
+        elif info["battery_left"] > 10:
+            return float(-50)
+
+        # reward for going to charger with low battery
+        else:
+            return float(10)
+
+    # punish heavily for running out of battery
+    elif info["battery_left"] == 0:
+        return float(-100)
+
+    # punish for staying at the same location
+    elif info["agent_moved"][0] == False:
+        return float(-5)
+
+    # punish a little for moving without cleaning
+    elif sum(info["dirt_cleaned"]) < 1:
+        return float(-1)
+
+    # reward for cleaning dirt
+    else:
+        return float(5)
+
+
 def main(
     no_gui: bool,
     iters: int,
     fps: int,
     out: Path,
     random_seed: int,
+    battery_size: int,
+    no_battery: bool,
 ):
     """Main loop of the program."""
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        Path("grid_configs/simple1.grd"),
+        # Path("grid_configs/simple1.grd"),
         Path("grid_configs/20-10-grid.grd"),
     ]
 
     # test for 2 different sigma values
-    for sigma in [0, 0.4]:
+    for sigma in [0.4]:  # [0, 0.4]:
         for grid in grid_paths:
             # Set up the environment and reset it to its initial state
-            env = Environment(
-                grid,
-                no_gui,
-                n_agents=1,
-                agent_start_pos=[(1, 1)],
-                target_fps=fps,
-                sigma=0,
-                random_seed=random_seed,
-                reward_fn=reward_function,
+            env = (
+                EnvironmentBattery(
+                    grid,
+                    battery_size=battery_size,
+                    no_gui=no_gui,
+                    n_agents=1,
+                    agent_start_pos=[(1, 1)],
+                    target_fps=fps,
+                    sigma=0,
+                    random_seed=random_seed,
+                    reward_fn=battery_reward_function,
+                )
+                if not no_battery
+                else Environment(
+                    grid,
+                    no_gui=no_gui,
+                    n_agents=1,
+                    agent_start_pos=[(1, 1)],
+                    target_fps=fps,
+                    sigma=0,
+                    random_seed=random_seed,
+                    reward_fn=reward_function,
+                )
             )
+
             obs, info = env.get_observation()
 
             # add all agents to test
             agents = [
-                QAgent(0, learning_rate=1, gamma=0.6, epsilon_decay=0.001),
-                QAgent(0, learning_rate=1, gamma=0.9, epsilon_decay=0.001),
-                MCAgent(
-                    0,
-                    obs,
-                    gamma=0.6,
-                    epsilon=0.1,
-                    len_episode=100,
-                    n_times_no_policy_change_for_convergence=100,
-                ),
-                MCAgent(
-                    0,
-                    obs,
-                    gamma=0.9,
-                    epsilon=0.1,
-                    len_episode=100,
-                    n_times_no_policy_change_for_convergence=100,
-                ),
-                Policy_iteration(
-                    0,
-                    gamma=0.6,
-                ),
-                Policy_iteration(
-                    0,
-                    gamma=0.9,
-                ),
+                QAgent(
+                    0, learning_rate=1, gamma=0.6, epsilon_decay=0.001
+                ),  # Replace with your agent
             ]
 
             # Iterate through each agent for `iters` iterations
@@ -167,7 +217,6 @@ def main(
                     grid == Path("grid_configs/simple1.grd")
                 ):
                     continue
-                
 
                 fname = f"{type(agent).__name__}-sigma-{sigma}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
@@ -204,7 +253,6 @@ def main(
                         break
 
                 obs, info, world_stats = env.reset()
-                print(world_stats)
 
                 if type(agent).__name__ == "MCAgent":
                     agent.update_policy(optimal=True)
@@ -212,7 +260,16 @@ def main(
                 if type(agent).__name__ == "Policy_iteration":
                     agent.dirty_tiles = []
 
-                Environment.evaluate_agent(
+                EnvironmentBattery.evaluate_agent(
+                    grid,
+                    [agent],
+                    1000,
+                    out,
+                    sigma,
+                    agent_start_pos=[(1, 1)],
+                    custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+                    battery_size=battery_size,
+                ) if not no_battery else Environment.evaluate_agent(
                     grid,
                     [agent],
                     1000,
@@ -231,4 +288,6 @@ if __name__ == "__main__":
         args.fps,
         args.out,
         args.random_seed,
+        args.battery_size,
+        args.no_battery,
     )
