@@ -283,21 +283,6 @@ def main(
                     break
         for agent in agents:
             agent.eps = 0
-            agent.save_model(
-                Path(
-                    "models/"
-                    + type(agent).__name__
-                    + agent.agent_number
-                    + "_"
-                    + str(agent.gamma)
-                    + "_"
-                    + str(agent.tau)
-                    + "_"
-                    + "Battery: "
-                    + str(battery_size)
-                    + ".weights"
-                )
-            )
         obs, info, world_stats = env.reset()
 
         # BatteryRelated
