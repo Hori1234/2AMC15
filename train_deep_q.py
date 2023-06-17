@@ -217,7 +217,7 @@ def main(
                 epsilon_decay=0.001,
                 memory_size=100000,
                 batch_size=32,
-                tau=0.1,
+                tau=1,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
@@ -228,7 +228,7 @@ def main(
                 epsilon_decay=0.001,
                 memory_size=100000,
                 batch_size=32,
-                tau=0.1,
+                tau=1,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
@@ -280,9 +280,23 @@ def main(
                 # Early stopping criterion.
                 if converged:
                     break
-
-        agents[0].eps = 0
-        agents[1].eps = 0
+        for agent in agents:
+            agent.eps = 0
+            agent.save_model(
+                Path(
+                    "models/"
+                    + type(agent).__name__
+                    + agent.agent_number
+                    + "_"
+                    + str(agent.gamma)
+                    + "_"
+                    + str(agent.tau)
+                    + "_"
+                    + "Battery: "
+                    + str(battery_size)
+                    + ".weights"
+                )
+            )
         obs, info, world_stats = env.reset()
 
         # BatteryRelated
