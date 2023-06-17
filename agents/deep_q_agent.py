@@ -13,9 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
-# if GPU is to be used
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(device)
+
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
 
@@ -45,7 +43,7 @@ class DQN(nn.Module):
     # Called with either one element to determine next action, or a batch
     # during optimization.
     def forward(self, x):
-        x = x.to(next(self.parameters()).device)
+        # x = x.to(next(self.parameters()).device)
         x = F.leaky_relu(self.layer1(x))
         # x = self.dropout(x)
         x = F.leaky_relu(self.layer2(x))
@@ -92,14 +90,21 @@ class DeepQAgent(BaseAgent):
         self.dirty_tiles = []
         self.tile_state = []
         self.first_run = True
+
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda")
+
+        print("the test will be run on: ", self.device)
+        print("CUda current device: ", torch.cuda.current_device())
+
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
         self.battery_size = battery_size
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
-        self.policy_net = DQN(n_of_states, n_actions).to(device)
-        self.target_net = DQN(n_of_states, n_actions).to(device)
+        self.policy_net = DQN(n_of_states, n_actions).to(self.device)
+        self.target_net = DQN(n_of_states, n_actions).to(self.device)
         # Copy the weights of the policy network to the target network.
         self.target_net.load_state_dict(self.policy_net.state_dict())
         # Initialize the optimizer.
@@ -147,13 +152,13 @@ class DeepQAgent(BaseAgent):
 
             # Turn the variables into tensors for the neural network.
             old_state = torch.tensor(
-                old_state, dtype=torch.float32, device=device
+                old_state, dtype=torch.float32, device=self.device
             ).unsqueeze(0)
             new_state = torch.tensor(
-                new_state, dtype=torch.float32, device=device
+                new_state, dtype=torch.float32, device=self.device
             ).unsqueeze(0)
-            reward = torch.tensor([reward], device=device)
-            action = torch.tensor([[action]], device=device, dtype=torch.long)
+            reward = torch.tensor([reward], device=self.device)
+            action = torch.tensor([[action]], device=self.device, dtype=torch.long)
 
             # Push the tuple into the memory of the agent.
             self.memory.push(old_state, action, new_state, reward)
@@ -232,10 +237,13 @@ class DeepQAgent(BaseAgent):
                 info["battery_left"][self.agent_number] / self.battery_size
             ]
             state = list(state.flatten()) + self.tile_state + battery_state
+            state = torch.tensor(state, dtype=torch.float32).flatten().to(self.device)
             # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
-                return self.policy_net(torch.tensor(state).float()).to(device).max(0)[1]
+                return self.policy_net(
+                    torch.tensor(state).float().to(self.device).clone().detach()
+                ).max(0)[1]
         else:
             return randint(0, 3)
 
@@ -256,7 +264,7 @@ class DeepQAgent(BaseAgent):
         # (a final state would've been the one after which simulation ended)
         non_final_mask = torch.tensor(
             tuple(map(lambda s: s is not None, batch.next_state)),
-            device=device,
+            device=self.device,
             dtype=torch.bool,
         )
         # print(np.shape(batch.next_state[1]))
@@ -278,7 +286,7 @@ class DeepQAgent(BaseAgent):
         # on the "older" target_net; selecting their best reward with max(1)[0].
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_state_values = torch.zeros(self.batch_size, device=device)
+        next_state_values = torch.zeros(self.batch_size, device=self.device)
         with torch.no_grad():
             next_state_values[non_final_mask] = self.target_net(
                 non_final_next_states
@@ -305,3 +313,13 @@ class DeepQAgent(BaseAgent):
                 key
             ] * self.tau + target_net_state_dict[key] * (1 - self.tau)
         self.target_net.load_state_dict(target_net_state_dict)
+
+    def save_model(self, path):
+        print("model_saved")
+        torch.save(self.policy_net.state_dict(), path)
+
+    def load_model(self, path):
+        self.policy_net.load_state_dict(torch.load(path))
+        self.policy_net.eval()
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.eval()

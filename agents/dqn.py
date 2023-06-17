@@ -269,3 +269,13 @@ class ODeepQAgent(BaseAgent):
         # In-place gradient clipping
         torch.nn.utils.clip_grad_value_(self.policy_net.parameters(), 100)
         self.optimizer.step()
+
+    def save_model(self, path):
+        print("model_saved")
+        torch.save(self.q_network.state_dict(), path)
+
+    def load_model(self, path):
+        self.q_network.load_state_dict(torch.load(path))
+        self.q_network.eval()
+        self.target_network.load_state_dict(self.q_network.state_dict())
+        self.target_network.eval()
