@@ -167,7 +167,7 @@ class EnvironmentBattery:
         charger_loc = np.where(self.grid.cells == 4)
         self.agent_pos = []
         for agent in range(self.n_agents):
-            cx, cy = charger_loc[0][agent], charger_loc[1][agent]
+            cx, cy = charger_loc[agent][agent], charger_loc[1][agent]
             self.agent_pos.append((cx, cy))
 
     def get_observation(self):  # -> [np.ndarray, dict]:

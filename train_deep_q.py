@@ -7,6 +7,7 @@ In this example training script, we use command line arguments. Feel free to
 change this to however you want it to work.
 """
 from argparse import ArgumentParser
+import copy
 from pathlib import Path
 
 from tqdm import trange
@@ -233,29 +234,25 @@ def main(
             ),
             # QAgent(0)
         ]
-        agent1 = agents[0]
-        agent2 = agents[1]
         # Iterate through each agent for `iters` iterations
         # for agent in agents:
-        fname = f"{type(agent1).__name__}-gamma-{agent1.gamma}-n_iters{iters}-time-{time.time()}"
+        fname = f"{type(agents[0]).__name__}-gamma-{agents[0].gamma}-n_iters{iters}-time-{time.time()}"
         #
-        print("Agent is ", type(agent1).__name__, " gamma is ", agent1.gamma)
-        agents = [agent1, agent2]
-        actions = [4]*len(agents)
+        print("Agent is ", type(agents[0]).__name__, " gamma is ", agents[0].gamma)
         for i in trange(iters):
             for agent in agents:
+                actions = [4] * len(agents)
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
                 actions[agent.agent_number] = action
                 old_state = info["agent_pos"][agent.agent_number]
-
+                old_tile_state = agent.tile_state.copy()
                 # BatteryRelated
                 old_battery_state = info["battery_left"][agent.agent_number]
-
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step(actions, agent.agent_number)
-                new_state = info["agent_pos"][agent.agent_number]
 
+                new_state = info["agent_pos"][agent.agent_number]
                 # print("info: ", info)
                 # print("world_stats: ", env.world_stats)
                 # print("reward: ", reward)
@@ -270,13 +267,12 @@ def main(
                     old_battery_state,
                     terminated,
                 )
-
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
                     print("Terminated")
-                if (reward == 5 and len(agents) > 1) or terminated:
+                if (old_tile_state != agent.tile_state) or terminated:
                     for other_agent in agents:
                         if other_agent != agent:
                             other_agent.update_agent(agent.dirty_tiles, agent.tile_state, terminated)
@@ -285,14 +281,14 @@ def main(
                 if converged:
                     break
 
-        agent1.eps = 0
-        agent2.eps = 0
+        agents[0].eps = 0
+        agents[1].eps = 0
         obs, info, world_stats = env.reset()
 
         # BatteryRelated
         EnvironmentBattery.evaluate_agent(
             grid,
-            [agent1, agent2],
+            agents,
             1000,
             out,
             sigma=0,
@@ -301,7 +297,7 @@ def main(
             battery_size=battery_size,
         ) if not no_battery else Environment.evaluate_agent(
             grid,
-            [agent1, agent2],
+            agents,
             1000,
             out,
             sigma=0,

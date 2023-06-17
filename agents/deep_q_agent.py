@@ -108,13 +108,14 @@ class DeepQAgent(BaseAgent):
     ):
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
-
         # Copy the old tile state to a new variable
         old_tile_state = copy(self.tile_state)
 
         if sum(info["dirt_cleaned"]) == 1 and (x, y) not in self.dirty_tiles:
             # If the agent cleans a dirt tile which it has not yet saved in its memory (self.dirty_tiles), run updateTileState().
+            x, y = info["agent_pos"][self.agent_number]
             old_tile_state = self.updateTileShape(x, y, old_tile_state)
+            #print("ja")
 
         if not self.first_run:
             # Create the state vector of the current state.
@@ -128,7 +129,6 @@ class DeepQAgent(BaseAgent):
             clear_state[old_state[0], old_state[1]] = 1
             old_battery_state = [old_battery_state/self.battery_size]
             old_state = list(clear_state.flatten()) + old_tile_state + old_battery_state
-
             # Turn the variables into tensors for the neural network.
             #print(self.agent_number)
             old_state = torch.tensor(
@@ -160,7 +160,6 @@ class DeepQAgent(BaseAgent):
                 # If this was the first run, determine the size of the input layer of the neural network.
                 # The state space is increased by 1 for the battery state.
                 state_space = self.w * self.h + len(self.tile_state) + 1
-                print(state_space)
                 # state_space = 2+len(self.tile_state)
                 # print(f'State space: {state_space}')
                 # Initialize the neural network.
@@ -246,8 +245,6 @@ class DeepQAgent(BaseAgent):
             device=device,
             dtype=torch.bool,
         )
-        print(self.agent_number)
-        print(np.shape(batch.next_state[1]))
         # print()
         non_final_next_states = torch.cat(
             [s for s in batch.next_state if s is not None]
@@ -305,7 +302,6 @@ class DeepQAgent(BaseAgent):
                 # If this was the first run, determine the size of the input layer of the neural network.
                 # The state space is increased by 1 for the battery state.
                 state_space = self.w * self.h + len(self.tile_state) + 1
-                print(state_space)
                 # state_space = 2+len(self.tile_state)
                 # print(f'State space: {state_space}')
                 # Initialize the neural network.
