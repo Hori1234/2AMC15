@@ -173,9 +173,9 @@ def main(
         # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
-        # Path("grid_configs/walldirt-1.grd"),
+        Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
-        Path("grid_configs/simple1.grd"),
+        # Path("grid_configs/simple1.grd"),
     ]
 
     for grid in grid_paths:
@@ -189,7 +189,7 @@ def main(
                 n_agents=1,
                 agent_start_pos=None,
                 target_fps=fps,
-                sigma=0.2,
+                sigma=0,
                 random_seed=random_seed,
                 reward_fn=battery_reward_function,
             )
@@ -200,7 +200,7 @@ def main(
                 n_agents=1,
                 agent_start_pos=None,
                 target_fps=fps,
-                sigma=0.2,
+                sigma=0,
                 random_seed=random_seed,
                 reward_fn=reward_function,
             )
@@ -213,7 +213,7 @@ def main(
                 agent_number=0,
                 learning_rate=0.00001,
                 gamma=0.90,
-                epsilon_decay=0.001,
+                epsilon_decay=0.0005,
                 memory_size=100000,
                 batch_size=32,
                 tau=0.05,
