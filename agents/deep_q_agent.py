@@ -13,6 +13,7 @@ import torch.nn.functional as F
 
 # if GPU is to be used
 device = torch.device("cuda" if torch.backends.cuda.is_built() and torch.cuda.is_available() else "cpu")
+# device = torch.device("mps")
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
@@ -81,6 +82,7 @@ class DeepQAgent(BaseAgent):
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
         self.battery_size = battery_size
+        self.loss = 0
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
@@ -267,6 +269,7 @@ class DeepQAgent(BaseAgent):
         # Compute Huber loss
         criterion = nn.SmoothL1Loss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+        self.loss = loss.item()
 
         # Optimize the model
         self.optimizer.zero_grad()

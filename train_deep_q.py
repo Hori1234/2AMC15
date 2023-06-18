@@ -169,13 +169,13 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        Path("grid_configs/single-agent-map.grd"),
+        # Path("grid_configs/single-agent-map.grd"),
         # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
-        # Path("grid_configs/simple1.grd"),
+        Path("grid_configs/simple1.grd"),
     ]
 
     for grid in grid_paths:
@@ -212,10 +212,10 @@ def main(
             DeepQAgent(
                 agent_number=0,
                 learning_rate=0.00001,
-                gamma=0.95,
+                gamma=0.90,
                 epsilon_decay=0.001,
                 memory_size=100000,
-                batch_size=64,
+                batch_size=32,
                 tau=0.05,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
@@ -241,6 +241,9 @@ def main(
 
             print("Agent is ", type(agent).__name__, " gamma is ", agent.gamma)
 
+            # Define a variable to accumulate the total loss
+            total_loss = []
+
             for i in trange(iters):
                 # Agent takes an action based on the latest observation and info
                 action = agent.take_action(obs, info)
@@ -261,11 +264,21 @@ def main(
                     old_battery_state,
                 )
 
+                total_loss += [agent.loss]
+
+
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
                     print("Terminated")
+                    # Compute the average loss
+                    average_loss = sum(total_loss) / len(total_loss)
+
+                    # Print the average loss
+                    print("Average Loss:", average_loss)
+
+                    total_loss = []
 
                 # Early stopping criterion.
                 if converged:
