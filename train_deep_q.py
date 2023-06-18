@@ -38,7 +38,6 @@ except ModuleNotFoundError:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
-    from agents.dqn import ODeepQAgent
 
 
 def parse_args():
@@ -205,7 +204,7 @@ def main(
                 agent_number=0,
                 learning_rate=0.00001,
                 gamma=0.9,
-                epsilon_decay=0.001,
+                epsilon_decay=0.0005,
                 memory_size=100000,
                 batch_size=32,
                 tau=1,
@@ -216,7 +215,7 @@ def main(
                 agent_number=0,
                 learning_rate=0.00001,
                 gamma=0.9,
-                epsilon_decay=0.001,
+                epsilon_decay=0.0005,
                 memory_size=100000,
                 batch_size=32,
                 tau=0.1,
