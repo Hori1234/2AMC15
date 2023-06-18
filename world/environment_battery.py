@@ -536,7 +536,13 @@ class EnvironmentBattery:
                 actions = [4] * len(agents)
                 action = agent.take_action(obs, info)
                 actions[agent.agent_number] = action
+                old_tile_state = agent.tile_state.copy()
                 obs, _, terminated, info = env.step(actions, agent.agent_number)
+
+                if (old_tile_state != agent.tile_state) or terminated:
+                    for other_agent in agents:
+                        if other_agent != agent:
+                            other_agent.update_agent(agent.dirty_tiles, agent.tile_state, terminated)
 
             # Save the new agent locations
             for i, pos in enumerate(info["agent_pos"]):
@@ -544,6 +550,8 @@ class EnvironmentBattery:
 
             if terminated:
                 break
+
+
 
         summed_dirt = env.grid.sum_dirt()
         obs, info, world_stats = env.reset()

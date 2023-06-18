@@ -170,6 +170,7 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
+        # Path("grid_configs/test_2_chargers_bit_bigger.grd"),
         Path("grid_configs/small_test.grd"),
         #Path("grid_configs/10x10_2_charge.grd"),
         #Path("grid_configs/20-10-grid.grd"),
@@ -183,30 +184,18 @@ def main(
     for grid in grid_paths:
         # Set up the environment and reset it to its initial state
         # BatteryRelated
-        env = (
-            EnvironmentBattery(
+        env = EnvironmentBattery(
                 grid,
                 battery_size=battery_size,
                 no_gui=no_gui,
                 n_agents=2,
-                agent_start_pos=None,
+                agent_start_pos=[[1,2],[6,8]],
                 target_fps=fps,
                 sigma=0,
                 random_seed=random_seed,
                 reward_fn=battery_reward_function,
             )
-            if not no_battery
-            else Environment(
-                grid,
-                no_gui=no_gui,
-                n_agents=2,
-                agent_start_pos=None,
-                target_fps=fps,
-                sigma=0,
-                random_seed=random_seed,
-                reward_fn=reward_function,
-            )
-        )
+
         obs, info = env.get_observation()
 
         # add all agents to test
@@ -215,10 +204,10 @@ def main(
                 agent_number=0,
                 learning_rate=0.00001,
                 gamma=0.9,
-                epsilon_decay=0.001,
+                epsilon_decay=0.0005,
                 memory_size=100000,
                 batch_size=32,
-                tau=1,
+                tau=0.1,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
@@ -226,10 +215,10 @@ def main(
                 agent_number=1,
                 learning_rate=0.00001,
                 gamma=0.9,
-                epsilon_decay=0.001,
+                epsilon_decay=0.0005,
                 memory_size=100000,
                 batch_size=32,
-                tau=1,
+                tau=0.1,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
@@ -271,8 +260,8 @@ def main(
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
-                    print(f"Epsilon: {agent.eps}")
-                    print("Terminated")
+                    # print(f"Epsilon: {agent.eps}")
+                    # print("Terminated")
                 if (old_tile_state != agent.tile_state) or terminated:
                     for other_agent in agents:
                         if other_agent != agent:
@@ -280,9 +269,14 @@ def main(
 
                 # Early stopping criterion.
                 if converged:
-                    break
+                    print(f'agent {agent.agent_number} has converged')
+                    agent.converged= True
+            if all(ag.converged == True for ag in agents):
+                print("all agents have converged")
+                break
         for agent in agents:
             agent.eps = 0
+
         obs, info, world_stats = env.reset()
 
         # BatteryRelated
@@ -292,17 +286,9 @@ def main(
             1000,
             out,
             sigma=0,
-            agent_start_pos=None,
-            custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+            agent_start_pos=[[1,2],[4,3]],
+            custom_file_name=fname + f"-converged-{agent.converged}-n-iters-{i}",
             battery_size=battery_size,
-        ) if not no_battery else Environment.evaluate_agent(
-            grid,
-            agents,
-            1000,
-            out,
-            sigma=0,
-            agent_start_pos=None,
-            custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
         )
 
 

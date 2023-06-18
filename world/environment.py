@@ -526,15 +526,19 @@ class Environment:
             max_steps, desc=f"Evaluating agent" f"{'s' if len(agents) > 1 else ''}"
         ):
             # Get the agent actions
-            actions = [agent.take_action(obs, info) for agent in agents]
+            actions = [agent.take_action(obs, info)
+                       for agent in agents]
+
             # Take a step in the environment
-            obs, _, terminated, info = env.step(actions)
+
+            obs1, _, terminated1, info1 = env.step([actions[0], 4])
+            obs2, _, terminated2, info2 = env.step([4, actions[0]])
 
             # Save the new agent locations
-            for i, pos in enumerate(info["agent_pos"]):
+            for i, pos in enumerate(info2["agent_pos"]):
                 agent_paths[i].append(pos)
 
-            if terminated:
+            if terminated1 or terminated2:
                 break
 
         summed_dirt = env.grid.sum_dirt()

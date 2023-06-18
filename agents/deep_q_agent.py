@@ -83,6 +83,7 @@ class DeepQAgent(BaseAgent):
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
         self.battery_size = battery_size
+        self.converged = False
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
@@ -213,7 +214,7 @@ class DeepQAgent(BaseAgent):
         # If the sample is bigger than epsilon, exploit the neural network, otherwise return a random move.
         if eps > self.eps:
             # Create the input layer of the neural network.
-            print("exploiting")
+            # print("exploiting")
             state = np.zeros((self.h, self.w), dtype=np.uint8)
             state[x][y] = 1
             battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
