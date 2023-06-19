@@ -22,6 +22,7 @@ try:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.random_agent import RandomAgent
 
     from agents.q_learning_agent import QAgent
 except ModuleNotFoundError:
@@ -42,6 +43,7 @@ except ModuleNotFoundError:
     from world import EnvironmentBattery
 
     # Add your agents here
+    from agents.random_agent import RandomAgent
     from agents.deep_q_agent import DeepQAgent
 
 
@@ -172,8 +174,8 @@ def main(
     grid_paths = [
         # Path("grid_configs/test_2_chargers_bit_bigger.grd"),
         Path("grid_configs/small_test.grd"),
-        #Path("grid_configs/10x10_2_charge.grd"),
-        #Path("grid_configs/20-10-grid.grd"),
+        # Path("grid_configs/10x10_2_charge.grd"),
+        # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
@@ -185,44 +187,46 @@ def main(
         # Set up the environment and reset it to its initial state
         # BatteryRelated
         env = EnvironmentBattery(
-                grid,
-                battery_size=battery_size,
-                no_gui=no_gui,
-                n_agents=2,
-                agent_start_pos=[[1,2],[6,8]],
-                target_fps=fps,
-                sigma=0,
-                random_seed=random_seed,
-                reward_fn=battery_reward_function,
-            )
+            grid,
+            battery_size=battery_size,
+            no_gui=no_gui,
+            n_agents=2,
+            agent_start_pos=[[1, 2], [6, 8]],
+            target_fps=fps,
+            sigma=0,
+            random_seed=random_seed,
+            reward_fn=battery_reward_function,
+        )
 
         obs, info = env.get_observation()
 
         # add all agents to test
         agents = [
-            DeepQAgent(
-                agent_number=0,
-                learning_rate=0.00001,
-                gamma=0.9,
-                epsilon_decay=0.0005,
-                memory_size=100000,
-                batch_size=32,
-                tau=0.1,
-                epsilon_stop=0.3,
-                battery_size=battery_size,
-            ),
-            DeepQAgent(
-                agent_number=1,
-                learning_rate=0.00001,
-                gamma=0.9,
-                epsilon_decay=0.0005,
-                memory_size=100000,
-                batch_size=32,
-                tau=0.1,
-                epsilon_stop=0.3,
-                battery_size=battery_size,
-            ),
+            # DeepQAgent(
+            #     agent_number=0,
+            #     learning_rate=0.00001,
+            #     gamma=0.9,
+            #     epsilon_decay=0.0005,
+            #     memory_size=100000,
+            #     batch_size=32,
+            #     tau=0.1,
+            #     epsilon_stop=0.3,
+            #     battery_size=battery_size,
+            # ),
+            # DeepQAgent(
+            #     agent_number=1,
+            #     learning_rate=0.00001,
+            #     gamma=0.9,
+            #     epsilon_decay=0.0005,
+            #     memory_size=100000,
+            #     batch_size=32,
+            #     tau=0.1,
+            #     epsilon_stop=0.3,
+            #     battery_size=battery_size,
+            # ),
             # QAgent(0)
+            RandomAgent(0, 0.9),
+            RandomAgent(1, 0.9),
         ]
         # Iterate through each agent for `iters` iterations
         # for agent in agents:
@@ -265,12 +269,14 @@ def main(
                 if (old_tile_state != agent.tile_state) or terminated:
                     for other_agent in agents:
                         if other_agent != agent:
-                            other_agent.update_agent(agent.dirty_tiles, agent.tile_state, terminated)
+                            other_agent.update_agent(
+                                agent.dirty_tiles, agent.tile_state, terminated
+                            )
 
                 # Early stopping criterion.
                 if converged:
-                    print(f'agent {agent.agent_number} has converged')
-                    agent.converged= True
+                    print(f"agent {agent.agent_number} has converged")
+                    agent.converged = True
             if all(ag.converged == True for ag in agents):
                 print("all agents have converged")
                 break
@@ -286,7 +292,7 @@ def main(
             1000,
             out,
             sigma=0,
-            agent_start_pos=[[1,2],[4,3]],
+            agent_start_pos=[[1, 2], [4, 3]],
             custom_file_name=fname + f"-converged-{agent.converged}-n-iters-{i}",
             battery_size=battery_size,
         )
