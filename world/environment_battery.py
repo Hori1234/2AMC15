@@ -414,7 +414,6 @@ class EnvironmentBattery:
             # Always do this, battery cannot be 0 at this point anymore
             # due to check at start of this function
             self._move_agent(new_pos, i)
-            self.battery_left[i] -= 1
 
             # I feel like we would want to know the state of the
             # battery both while running around on the grid,
