@@ -141,11 +141,11 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
 
     # punish heavily for running out of battery
     elif info["battery_left"][0] == 0:
-        return float(-500)
+        return float(-10)
 
     # punish for staying at the same location
     elif info["agent_moved"][0] == False:
-        return float(-5)
+        return float(-50)
 
     # punish a little for moving without cleaning
     elif sum(info["dirt_cleaned"]) < 1:
@@ -173,9 +173,9 @@ def main(
         # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
-        # Path("grid_configs/walldirt-1.grd"),
+        Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
-        Path("grid_configs/simple1.grd"),
+        # Path("grid_configs/simple1.grd"),
     ]
 
     for grid in grid_paths:
@@ -212,11 +212,11 @@ def main(
             DeepQAgent(
                 agent_number=0,
                 learning_rate=0.00001,
-                gamma=0.95,
-                epsilon_decay=0.001,
+                gamma=0.5,
+                epsilon_decay=0.0005,
                 memory_size=100000,
                 batch_size=32,
-                tau=0.1,
+                tau=0.01,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
