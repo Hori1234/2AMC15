@@ -241,7 +241,7 @@ class EnvironmentBattery:
         self.info = self._reset_info()
         self.world_stats = self._reset_world_stats()
         self.battery_left = [self.battery_size]*self.n_agents
-        self.info["battery_left"] = self.battery_left
+        self.info["battery_left"] = [self.battery_size]*self.n_agents
         if not self.no_gui:
             self.gui = EnvironmentGUI(self.grid.cells.shape)
             self.gui.reset()
@@ -295,7 +295,9 @@ class EnvironmentBattery:
                     self.info["agent_charging"][agent_id] = True
                     self.world_stats["total_agents_at_charger"] += 1
                 else:
-                    self.battery_left[agent_id] += 1
+                    self.battery_left[agent_id] = (
+                        self.battery_size
+                    )  # -1 because after calling this function 1 will be subtracted again
                      # -1 because after calling this function 1 will be subtracted again
                     self.info["agent_moved"][agent_id] = True
                     self.world_stats["total_agent_moves"] += 1
@@ -364,15 +366,19 @@ class EnvironmentBattery:
         max_x = self.grid.n_cols - 1
         max_y = self.grid.n_rows - 1
 
+        
         for i, action in enumerate(actions):
-            # Reset battery if empty, and register that we had an empty battery in self.info
-            if self.battery_left[i] == 0:
-                self.battery_left[i] = self.battery_size
-                self.world_stats["empty_battery_counter"] += 1
-
             if self.agent_done[i]:
                 # The agent is already on the charger, so it is done.
                 continue
+
+            if self.battery_left[i] > 0:
+                self.battery_left[i] -= 1
+            # Reset battery if empty, and register that we had an empty battery in self.info
+            else:
+                # self.battery_left = 0
+                # self.battery_left = self.battery_size
+                self.world_stats["empty_battery_counter"] += 1
 
             # Add stochasticity into the agent action
             val = random.random()
