@@ -118,7 +118,13 @@ class DeepQAgent(BaseAgent):
             # Create the state vector of the current state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[x, y] = 1
-            new_battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
+            # _____________________ISSUE____________________
+            # When the agents battery dies, the next state the battery will be filled and a high addon reward will be granted. 
+            # This makes it so that the agent is not desincentived to charge its battery
+            if info["agent_charging"][self.agent_number] == False and old_battery_state == 1:
+                new_battery_state = [0]
+            else:
+                new_battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
             new_state = list(clear_state.flatten()) + self.tile_state + new_battery_state
 
             # Create the state vector of the previous state.

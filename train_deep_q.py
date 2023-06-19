@@ -129,7 +129,7 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
     if info["agent_charging"][0] == True:
         # Reward if at charger after cleaning everything
         if grid.sum_dirt() == 0:
-            return float(20)
+            return float(100)
 
         # # punished for going to charger with enough battery left
         # elif info["battery_left"][0] > 20:
@@ -141,11 +141,11 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
 
     # punish heavily for running out of battery
     elif info["battery_left"][0] == 0:
-        return float(-100)
+        return float(-500)
 
     # punish for staying at the same location
     elif info["agent_moved"][0] == False:
-        return float(-50)
+        return float(-5)
 
     # punish a little for moving without cleaning
     elif sum(info["dirt_cleaned"]) < 1:
@@ -173,9 +173,9 @@ def main(
         # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
-        Path("grid_configs/walldirt-1.grd"),
+        # Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
-        # Path("grid_configs/simple1.grd"),
+        Path("grid_configs/simple1.grd"),
     ]
 
     for grid in grid_paths:
@@ -212,11 +212,11 @@ def main(
             DeepQAgent(
                 agent_number=0,
                 learning_rate=0.00001,
-                gamma=0.90,
-                epsilon_decay=0.0005,
+                gamma=0.95,
+                epsilon_decay=0.001,
                 memory_size=100000,
                 batch_size=32,
-                tau=0.05,
+                tau=0.1,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
             ),
@@ -251,6 +251,7 @@ def main(
 
                 # BatteryRelated
                 old_battery_state = info["battery_left"][agent.agent_number]
+                # print(old_battery_state)
 
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
@@ -272,11 +273,11 @@ def main(
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
                     print("Terminated")
-                    # Compute the average loss
-                    average_loss = sum(total_loss) / len(total_loss)
+                    # # Compute the average loss
+                    # average_loss = sum(total_loss) / len(total_loss)
 
-                    # Print the average loss
-                    print("Average Loss:", average_loss)
+                    # # Print the average loss
+                    # print("Average Loss:", average_loss)
 
                     total_loss = []
 
