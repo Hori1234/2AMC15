@@ -11,6 +11,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+<<<<<<< HEAD
+=======
+# if GPU is to be used
+device = torch.device("cuda" if torch.backends.cuda.is_built() and torch.cuda.is_available() else "cpu")
+# device = torch.device("mps")
+>>>>>>> e6bb4a07f694b0bcd875d09a199c708bf1888e1d
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
@@ -97,6 +103,7 @@ class DeepQAgent(BaseAgent):
         self.memory = ReplayMemory(memory_size)
         self.batch_size = batch_size
         self.battery_size = battery_size
+        self.loss = 0
 
     def initialize_network(self, n_of_states, n_actions):
         # Create the policy network and the target network.
@@ -132,12 +139,23 @@ class DeepQAgent(BaseAgent):
             # Create the state vector of the current state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[x, y] = 1
+<<<<<<< HEAD
             new_battery_state = [
                 info["battery_left"][self.agent_number] / self.battery_size
             ]
             new_state = (
                 list(clear_state.flatten()) + self.tile_state + new_battery_state
             )
+=======
+            # _____________________ISSUE____________________
+            # When the agents battery dies, the next state the battery will be filled and a high addon reward will be granted. 
+            # This makes it so that the agent is not desincentived to charge its battery
+            if info["agent_charging"][self.agent_number] == False and old_battery_state == 1:
+                new_battery_state = [0]
+            else:
+                new_battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
+            new_state = list(clear_state.flatten()) + self.tile_state + new_battery_state
+>>>>>>> e6bb4a07f694b0bcd875d09a199c708bf1888e1d
 
             # Create the state vector of the previous state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
@@ -292,6 +310,7 @@ class DeepQAgent(BaseAgent):
         # Compute Huber loss
         criterion = nn.SmoothL1Loss()
         loss = criterion(state_action_values, expected_state_action_values.unsqueeze(1))
+        self.loss = loss.item()
 
         # Optimize the model
         self.optimizer.zero_grad()

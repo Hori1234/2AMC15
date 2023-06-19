@@ -135,7 +135,7 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
     if info["agent_charging"][0] == True:
         # Reward if at charger after cleaning everything
         if grid.sum_dirt() == 0:
-            return float(20)
+            return float(100)
 
         # # punished for going to charger with enough battery left
         # elif info["battery_left"][0] > 20:
@@ -147,7 +147,7 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
 
     # punish heavily for running out of battery
     elif info["battery_left"][0] == 0:
-        return float(-100)
+        return float(-10)
 
     # punish for staying at the same location
     elif info["agent_moved"][0] == False:
@@ -176,10 +176,10 @@ def main(
     # add two grid paths we'll use for evaluating
     grid_paths = [
         # Path("grid_configs/single-agent-map.grd"),
-        Path("grid_configs/20-10-grid.grd"),
+        # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
-        # Path("grid_configs/walldirt-1.grd"),
+        Path("grid_configs/walldirt-1.grd"),
         # Path("grid_configs/walldirt-2.grd"),
         # Path("grid_configs/simple1.grd"),
     ]
@@ -195,7 +195,7 @@ def main(
                 n_agents=1,
                 agent_start_pos=None,
                 target_fps=fps,
-                sigma=0.2,
+                sigma=0,
                 random_seed=random_seed,
                 reward_fn=battery_reward_function,
             )
@@ -206,7 +206,7 @@ def main(
                 n_agents=1,
                 agent_start_pos=None,
                 target_fps=fps,
-                sigma=0.2,
+                sigma=0,
                 random_seed=random_seed,
                 reward_fn=reward_function,
             )
@@ -214,13 +214,40 @@ def main(
         obs, info = env.get_observation()
 
         # add all agents to test
-        agents = [RandomAgent(0)]
+        agents = [
+            DeepQAgent(
+                agent_number=0,
+                learning_rate=0.00001,
+                gamma=0.5,
+                epsilon_decay=0.0005,
+                memory_size=100000,
+                batch_size=32,
+                tau=0.01,
+                epsilon_stop=0.3,
+                battery_size=battery_size,
+            ),
+            # This setting works well but it somewhat slow.
+            # DeepQAgent(
+            #     agent_number=0,
+            #     learning_rate=0.00001,
+            #     gamma=0.9,
+            #     epsilon_decay=0.0005,
+            #     memory_size=100000,
+            #     batch_size=32,
+            #     tau=0.1,
+            #     epsilon_stop=0.3,
+            #     battery_size=battery_size,
+            # ),
+        ]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
             fname = f"{type(agent).__name__}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
 
             print("Agent is ", type(agent).__name__, " gamma is ", agent.gamma)
+
+            # Define a variable to accumulate the total loss
+            total_loss = []
 
             for i in trange(iters):
                 # Agent takes an action based on the latest observation and info
@@ -229,6 +256,7 @@ def main(
 
                 # BatteryRelated
                 old_battery_state = info["battery_left"][agent.agent_number]
+                # print(old_battery_state)
 
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
@@ -242,11 +270,20 @@ def main(
                     old_battery_state,
                 )
 
+                total_loss += [agent.loss]
+
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
                     print(f"Epsilon: {agent.eps}")
                     print("Terminated")
+                    # # Compute the average loss
+                    # average_loss = sum(total_loss) / len(total_loss)
+
+                    # # Print the average loss
+                    # print("Average Loss:", average_loss)
+
+                    total_loss = []
 
                 # Early stopping criterion.
                 if converged:

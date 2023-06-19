@@ -296,7 +296,7 @@ class EnvironmentBattery:
                     self.world_stats["total_agents_at_charger"] += 1
                 else:
                     self.battery_left = (
-                        self.battery_size + 1
+                        self.battery_size
                     )  # -1 because after calling this function 1 will be subtracted again
                     self.info["agent_moved"][agent_id] = True
                     self.world_stats["total_agent_moves"] += 1
@@ -366,14 +366,19 @@ class EnvironmentBattery:
         max_y = self.grid.n_rows - 1
 
         for i, action in enumerate(actions):
-            # Reset battery if empty, and register that we had an empty battery in self.info
-            if self.battery_left == 0:
-                self.battery_left = self.battery_size
-                self.world_stats["empty_battery_counter"] += 1
-
             if self.agent_done[i]:
                 # The agent is already on the charger, so it is done.
                 continue
+
+            if self.battery_left > 0:
+                self.battery_left -= 1
+            # Reset battery if empty, and register that we had an empty battery in self.info
+            else:
+                # self.battery_left = 0
+                # self.battery_left = self.battery_size
+                self.world_stats["empty_battery_counter"] += 1
+
+            
 
             # Add stochasticity into the agent action
             val = random.random()
@@ -409,7 +414,6 @@ class EnvironmentBattery:
             # Always do this, battery cannot be 0 at this point anymore
             # due to check at start of this function
             self._move_agent(new_pos, i)
-            self.battery_left -= 1
 
             # I feel like we would want to know the state of the
             # battery both while running around on the grid,
