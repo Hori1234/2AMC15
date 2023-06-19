@@ -1,8 +1,10 @@
+import math
 import random
 
 # import matplotlib
 # import matplotlib.pyplot as plt
 from collections import namedtuple, deque
+from itertools import count
 from random import randint
 from copy import copy
 
@@ -41,6 +43,7 @@ class DQN(nn.Module):
     # Called with either one element to determine next action, or a batch
     # during optimization.
     def forward(self, x):
+        # x = x.to(next(self.parameters()).device)
         x = F.leaky_relu(self.layer1(x))
         # x = self.dropout(x)
         x = F.leaky_relu(self.layer2(x))
@@ -147,13 +150,13 @@ class DeepQAgent(BaseAgent):
 
             # Turn the variables into tensors for the neural network.
             old_state = torch.tensor(
-                old_state, dtype=torch.float32, device=self.device
+                old_state, dtype=torch.float32, device=device
             ).unsqueeze(0)
             new_state = torch.tensor(
-                new_state, dtype=torch.float32, device=self.device
+                new_state, dtype=torch.float32, device=device
             ).unsqueeze(0)
-            reward = torch.tensor([reward], device=self.device)
-            action = torch.tensor([[action]], device=self.device, dtype=torch.long)
+            reward = torch.tensor([reward], device=device)
+            action = torch.tensor([[action]], device=device, dtype=torch.long)
 
             # Push the tuple into the memory of the agent.
             self.memory.push(old_state, action, new_state, reward)
@@ -233,12 +236,10 @@ class DeepQAgent(BaseAgent):
             ]
             state = list(state.flatten()) + self.tile_state + battery_state
             state = torch.tensor(state, dtype=torch.float32).flatten().to(self.device)
-
             # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
                 return self.policy_net(state).float().clone().detach().max(0)[1]
-
         else:
             return randint(0, 3)
 

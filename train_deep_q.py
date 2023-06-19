@@ -21,6 +21,9 @@ try:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.random_agent import RandomAgent
+
+    # from agents.deep_q_agent_cuda import DeepQAgent
 
     from agents.q_learning_agent import QAgent
 except ModuleNotFoundError:
@@ -42,6 +45,9 @@ except ModuleNotFoundError:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.random_agent import RandomAgent
+
+    # from agents.deep_q_agent_cuda import DeepQAgent
 
 
 def parse_args():
@@ -169,8 +175,8 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        Path("grid_configs/single-agent-map.grd"),
-        # Path("grid_configs/20-10-grid.grd"),
+        # Path("grid_configs/single-agent-map.grd"),
+        Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
@@ -208,32 +214,7 @@ def main(
         obs, info = env.get_observation()
 
         # add all agents to test
-        agents = [
-            DeepQAgent(
-                agent_number=0,
-                learning_rate=0.00001,
-                gamma=0.95,
-                epsilon_decay=0.001,
-                memory_size=100000,
-                batch_size=64,
-                tau=0.05,
-                epsilon_stop=0.3,
-                battery_size=battery_size,
-            ),
-
-            # This setting works well but it somewhat slow.
-            # DeepQAgent(
-            #     agent_number=0,
-            #     learning_rate=0.00001,
-            #     gamma=0.9,
-            #     epsilon_decay=0.0005,
-            #     memory_size=100000,
-            #     batch_size=32,
-            #     tau=0.1,
-            #     epsilon_stop=0.3,
-            #     battery_size=battery_size,
-            # ),
-        ]
+        agents = [RandomAgent(0)]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
@@ -272,6 +253,20 @@ def main(
                     break
 
             agent.eps = 0
+            agent.save_model(
+                Path(
+                    "models/"
+                    + type(agent).__name__
+                    + "_"
+                    + str(agent.gamma)
+                    + "_"
+                    + str(agent.tau)
+                    + "_"
+                    + "Battery: "
+                    + str(battery_size)
+                    + ".weights"
+                )
+            )
             obs, info, world_stats = env.reset()
 
             # BatteryRelated
