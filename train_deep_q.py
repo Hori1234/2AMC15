@@ -141,7 +141,7 @@ def battery_reward_function(grid: Grid, info: dict) -> float:
 
     # punish heavily for running out of battery
     elif info["battery_left"][0] == 0:
-        return float(-10)
+        return float(-50)
 
     # punish for staying at the same location
     elif info["agent_moved"][0] == False:
@@ -211,13 +211,13 @@ def main(
         agents = [
             DeepQAgent(
                 agent_number=0,
-                learning_rate=0.00001,
-                gamma=0.5,
-                epsilon_decay=0.0005,
+                learning_rate=0.00002,
+                gamma=0.8,
+                epsilon_decay=0.0001,
                 memory_size=100000,
-                batch_size=32,
-                tau=0.01,
-                epsilon_stop=0.3,
+                batch_size=128,
+                tau=0.5,
+                epsilon_stop=0.4,
                 battery_size=battery_size,
             ),
 
