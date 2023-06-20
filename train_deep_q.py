@@ -21,6 +21,9 @@ try:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.random_agent import RandomAgent
+
+    # from agents.deep_q_agent_cuda import DeepQAgent
 
     from agents.q_learning_agent import QAgent
 except ModuleNotFoundError:
@@ -42,6 +45,9 @@ except ModuleNotFoundError:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.random_agent import RandomAgent
+
+    # from agents.deep_q_agent_cuda import DeepQAgent
 
 
 def parse_args():
@@ -220,7 +226,6 @@ def main(
                 epsilon_stop=0.4,
                 battery_size=battery_size,
             ),
-
             # This setting works well but it somewhat slow.
             # DeepQAgent(
             #     agent_number=0,
@@ -267,7 +272,6 @@ def main(
 
                 total_loss += [agent.loss]
 
-
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
@@ -286,6 +290,20 @@ def main(
                     break
 
             agent.eps = 0
+            agent.save_model(
+                Path(
+                    "models/"
+                    + type(agent).__name__
+                    + "_"
+                    + str(agent.gamma)
+                    + "_"
+                    + str(agent.tau)
+                    + "_"
+                    + "Battery: "
+                    + str(battery_size)
+                    + ".weights"
+                )
+            )
             obs, info, world_stats = env.reset()
 
             # BatteryRelated
