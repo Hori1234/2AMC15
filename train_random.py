@@ -21,6 +21,7 @@ try:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.random_agent import RandomAgent
 
     from agents.q_learning_agent import QAgent
 except ModuleNotFoundError:
@@ -42,6 +43,7 @@ except ModuleNotFoundError:
 
     # Add your agents here
     from agents.deep_q_agent import DeepQAgent
+    from agents.random_agent import RandomAgent
 
 
 def parse_args():
@@ -201,37 +203,14 @@ def main(
 
         # add all agents to test
         agents = [
-            # DeepQAgent(
-            #     agent_number=0,
-            #     learning_rate=0.00002,
-            #     gamma=0.8,
-            #     epsilon_decay=0.001,
-            #     memory_size=100000,
-            #     batch_size=128,
-            #     tau=0.1,
-            #     epsilon_stop=0.3,
-            #     battery_size=battery_size,
-            # ),
-
-            # This setting works well but it somewhat slow.
-            DeepQAgent(
-                agent_number=0,
-                learning_rate=0.00002,
-                gamma=0.8,
-                epsilon_decay=0.001,
-                memory_size=100000,
-                batch_size=128,
-                tau=0.5,
-                epsilon_stop=0.4,
-                battery_size=battery_size,
-            ),
+            RandomAgent(0)
         ]
 
         # Iterate through each agent for `iters` iterations
         for agent in agents:
-            fname = f"{type(agent).__name__}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
-
-            print("Agent is ", type(agent).__name__, " gamma is ", agent.gamma)
+            # fname = f"{type(agent).__name__}-gamma-{agent.gamma}-n_iters{iters}-time-{time.time()}"
+            fname = f"{type(agent).__name__}-n_iters{iters}-time-{time.time()}"
+            print("Agent is ", type(agent).__name__)
 
             # Define a variable to accumulate the total loss
             total_loss = []
@@ -248,34 +227,34 @@ def main(
                 # The action is performed in the environment
                 obs, reward, terminated, info = env.step([action])
 
-                converged = agent.process_reward(
-                    obs,
-                    info,
-                    reward,
-                    old_state,
-                    action,
-                    old_battery_state,
-                )
+                # converged = agent.process_reward(
+                #     obs,
+                #     info,
+                #     reward,
+                #     old_state,
+                #     action,
+                #     old_battery_state,
+                # )
 
-                total_loss += [agent.loss]
+                # total_loss += [agent.loss]
 
 
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
-                    print(f"Epsilon: {agent.eps}")
-                    print("Terminated")
-                    # Compute the average loss
-                    average_loss = sum(total_loss) / len(total_loss)
+                    # print(f"Epsilon: {agent.eps}")
+                    # print("Terminated")
+                    # # Compute the average loss
+                    # average_loss = sum(total_loss) / len(total_loss)
 
-                    # Print the average loss
-                    print("Average Loss:", average_loss)
+                    # # Print the average loss
+                    # print("Average Loss:", average_loss)
 
                     total_loss = []
 
-                # Early stopping criterion.
-                if converged:
-                    break
+                # # Early stopping criterion.
+                # if converged:
+                #     break
 
             agent.eps = 0
             obs, info, world_stats = env.reset()
@@ -288,7 +267,7 @@ def main(
                 out,
                 sigma=0,
                 agent_start_pos=None,
-                custom_file_name=fname + f"-converged-{converged}-n-iters-{i}-sigma-0.0",
+                custom_file_name=fname + f"-n-iters-{i}-sigma-0.0",
                 battery_size=battery_size,
             ) if not no_battery else Environment.evaluate_agent(
                 grid,
@@ -297,7 +276,7 @@ def main(
                 out,
                 sigma=0,
                 agent_start_pos=None,
-                custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+                custom_file_name=fname + f"-n-iters-{i}",
             )
 
             EnvironmentBattery.evaluate_agent(
@@ -307,7 +286,7 @@ def main(
                 out,
                 sigma=0.2,
                 agent_start_pos=None,
-                custom_file_name=fname + f"-converged-{converged}-n-iters-{i}-sigma-0.2",
+                custom_file_name=fname + f"-n-iters-{i}-sigma-0.2",
                 battery_size=battery_size,
             ) if not no_battery else Environment.evaluate_agent(
                 grid,
@@ -316,7 +295,7 @@ def main(
                 out,
                 sigma=0,
                 agent_start_pos=None,
-                custom_file_name=fname + f"-converged-{converged}-n-iters-{i}",
+                custom_file_name=fname + f"-n-iters-{i}",
             )
 
 

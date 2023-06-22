@@ -1,70 +1,115 @@
 import random
-
-# import matplotlib
-# import matplotlib.pyplot as plt
 from collections import namedtuple, deque
 from random import randint
 from copy import copy
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import numpy as np
+from agents import BaseAgent
 
 # if GPU is to be used
 device = torch.device("cuda" if torch.backends.cuda.is_built() and torch.cuda.is_available() else "cpu")
-# device = torch.device("mps")
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
-
 class ReplayMemory(object):
+    """
+    Experience replay memory buffer for storing and sampling transitions.
+    """
+
     def __init__(self, capacity):
+        """
+        Initialize the ReplayMemory object with a specified capacity.
+
+        Args:
+            capacity: The maximum capacity of the replay memory.
+        """
         self.memory = deque([], maxlen=capacity)
 
     def push(self, *args):
-        """Save a transition"""
+        """
+        Save a transition to the memory.
+
+        Args:
+            *args: Variable length argument list representing a transition.
+        """
         self.memory.append(Transition(*args))
 
     def sample(self, batch_size):
+        """
+        Randomly sample a batch of transitions from the memory.
+
+        Args:
+            batch_size: The size of the batch to sample.
+
+        Returns:
+            A list of randomly sampled transitions.
+        """
         return random.sample(self.memory, batch_size)
 
     def __len__(self):
+        """
+        Return the current size of the memory.
+
+        Returns:
+            The size of the memory.
+        """
         return len(self.memory)
 
 
 class DQN(nn.Module):
+    """
+    Deep Q-Network (DQN) model.
+    """
+
     def __init__(self, n_observations, n_actions):
+        """
+        Initialize the DQN model with the specified number of observations and actions.
+
+        Args:
+            n_observations: The number of observations.
+            n_actions: The number of actions.
+        """
         super(DQN, self).__init__()
         self.layer1 = nn.Linear(n_observations, 128)
         self.layer2 = nn.Linear(128, 128)
         self.layer3 = nn.Linear(128, n_actions)
         self.dropout = nn.Dropout(0.5)
 
-    # Called with either one element to determine next action, or a batch
-    # during optimization.
     def forward(self, x):
+        """
+        Perform forward pass through the network.
+
+        Args:
+            x: Input tensor.
+
+        Returns:
+            Output tensor representing Q-values for each action.
+        """
         x = F.leaky_relu(self.layer1(x))
-        # x = self.dropout(x)
         x = F.leaky_relu(self.layer2(x))
         return self.layer3(x)
 
-
-"""Null Agent.
-
-An agent which does nothing.
-"""
-import numpy as np
-
-from agents import BaseAgent
-
-
 class DeepQAgent(BaseAgent):
-    def __init__(self, agent_number, battery_size, learning_rate=0.01, gamma=0.95, epsilon_decay=0.01, memory_size=1000, batch_size=100, tau=0.05, epsilon_stop=0.1):
-        """Chooses an action based on learned q learning policy.
+    """
+    Deep Q-Learning agent for choosing actions based on learned Q-values.
+    """
+    def __init__(self, agent_number, battery_size, learning_rate=0.00002, gamma=0.8, epsilon_decay=0.001, memory_size=100000, batch_size=128, tau=0.5, epsilon_stop=0.4):
+        """
+        Initialize the Deep Q-Learning agent.
 
         Args:
             agent_number: The index of the agent in the environment.
+            battery_size: The maximum battery capacity of the agent.
+            learning_rate: The learning rate for the optimizer (default: 0.00002).
+            gamma: The discount factor for future rewards (default: 0.8).
+            epsilon_decay: The rate of decay for epsilon exploration (default: 0.001).
+            memory_size: The maximum size of the replay memory (default: 100000).
+            batch_size: The batch size for optimization (default: 128).
+            tau: The update rate for the target network (default: 0.5).
+            epsilon_stop: The minimum value of epsilon (default: 0.4).
         """
         super().__init__(agent_number)
         self.lr = learning_rate
@@ -85,6 +130,16 @@ class DeepQAgent(BaseAgent):
         self.loss = 0
 
     def initialize_network(self, n_of_states, n_actions):
+        """
+        Initializes the policy network, target network, and optimizer.
+
+        Args:
+            n_of_states (int): Number of input states for the neural networks.
+            n_actions (int): Number of possible actions for the agent.
+
+        Returns:
+            None
+        """
         # Create the policy network and the target network.
         self.policy_net = DQN(n_of_states, n_actions).to(device)
         self.target_net = DQN(n_of_states, n_actions).to(device)
@@ -104,6 +159,20 @@ class DeepQAgent(BaseAgent):
         action: int,
         old_battery_state: int,
     ):
+        """
+        Processes the reward, updates the agent's memory, and optimizes the model.
+
+        Args:
+            observation (np.ndarray): The current observation/state.
+            info (None | dict): Additional information about the environment.
+            reward (float): The reward received for the previous action.
+            old_state (tuple): The previous state of the agent.
+            action (int): The action taken in the previous state.
+            old_battery_state (int): The previous battery state of the agent.
+
+        Returns:
+            bool: True if the agent should stop learning (converged), False otherwise.
+        """
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
 
@@ -118,9 +187,6 @@ class DeepQAgent(BaseAgent):
             # Create the state vector of the current state.
             clear_state = np.zeros((self.h, self.w), dtype=np.uint8)
             clear_state[x, y] = 1
-            # _____________________ISSUE____________________
-            # When the agents battery dies, the next state the battery will be filled and a high addon reward will be granted. 
-            # This makes it so that the agent is not desincentived to charge its battery
             if info["agent_charging"][self.agent_number] == False and old_battery_state == 1:
                 new_battery_state = [0]
             else:
@@ -149,8 +215,6 @@ class DeepQAgent(BaseAgent):
             # Optimize the model.
             self.optimize_model()
 
-        # print(observation)
-
         if info["agent_charging"][self.agent_number] == True and (3 not in observation):
             # If the agent is charging and all dirty tiles have been cleaned, 
             # the episode has ended and update the epsilon value for the subsequent episode.
@@ -161,8 +225,6 @@ class DeepQAgent(BaseAgent):
                 # If this was the first run, determine the size of the input layer of the neural network.
                 # The state space is increased by 1 for the battery state.
                 state_space = self.w * self.h + len(self.tile_state) + 1
-                # state_space = 2+len(self.tile_state)
-                # print(f'State space: {state_space}')
                 # Initialize the neural network.
                 self.initialize_network(state_space, 4)
                 # The first run is over so set the first run boolean to False.
@@ -175,7 +237,8 @@ class DeepQAgent(BaseAgent):
             return False
 
     def updateTileShape(self, x, y, old_tile_state):
-        """A function that adds the newly found dirty tile to the self.dirty_tiles list and updates the tile state accordingly.
+        """
+        Updates the tile state and adds the newly found dirty tile to the list of dirty tiles.
 
         Args:
             x (int): The x coordinate of the agent.
@@ -183,7 +246,7 @@ class DeepQAgent(BaseAgent):
             old_tile_state (list): A binary list of which dirty tiles have and have not been cleaned yet.
 
         Returns:
-            list: The binary list of the previous tile state.
+            list: The updated binary list of the previous tile state.
         """
         # Add the new found dirty tile to the list.
         self.dirty_tiles += [(x, y)]
@@ -194,6 +257,21 @@ class DeepQAgent(BaseAgent):
         return old_tile_state
 
     def take_action(self, observation: np.ndarray, info: None | dict) -> int:
+        """
+        Selects an action for the agent to take based on the current observation and information.
+
+        Args:
+            observation (np.ndarray): The current observation of the environment.
+            info (None or dict): Additional information about the environment.
+
+        Returns:
+            int: The selected action for the agent.
+
+        Notes:
+            - The action values correspond to the following directions: 0 = up, 1 = right, 2 = down, 3 = left.
+            - The method uses an epsilon-greedy approach to explore and exploit the agent's knowledge.
+
+        """
         # Get the agents position.
         x, y = info["agent_pos"][self.agent_number]
 
@@ -218,7 +296,6 @@ class DeepQAgent(BaseAgent):
             state[x][y] = 1
             battery_state = [info['battery_left'][self.agent_number]/self.battery_size]
             state = list(state.flatten()) + self.tile_state + battery_state
-            # state = [x]+[y]+self.tile_state
             with torch.no_grad():
                 # Return the action belonging to the highest value in the output of the neural network.
                 return self.policy_net(torch.tensor(state).float().to(device)).max(0)[1]
@@ -226,6 +303,15 @@ class DeepQAgent(BaseAgent):
             return randint(0, 3)
 
     def optimize_model(self):
+        """
+        Performs a single optimization step for the policy network based on the stored experiences.
+
+        Notes:
+            - This method implements the Deep Double Q-Network (DDQN) algorithm.
+            - It uses a mini-batch of transitions sampled from the replay memory to update the policy network.
+            - The target network is also updated to track the changes in the policy network gradually.
+
+        """
         # If the memory does not yet contain enough samples for the batch to be full, return to avoid a update of the neural network.
         if len(self.memory) < self.batch_size:
             return
@@ -245,8 +331,6 @@ class DeepQAgent(BaseAgent):
             device=device,
             dtype=torch.bool,
         )
-        # print(np.shape(batch.next_state[1]))
-        # print()
         non_final_next_states = torch.cat(
             [s for s in batch.next_state if s is not None]
         )
