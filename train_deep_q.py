@@ -191,7 +191,7 @@ def main(
             battery_size=battery_size,
             no_gui=no_gui,
             n_agents=2,
-            agent_start_pos=[[1, 2], [6, 8]],
+            agent_start_pos=None,
             target_fps=fps,
             sigma=0,
             random_seed=random_seed,
@@ -202,31 +202,28 @@ def main(
 
         # add all agents to test
         agents = [
-            # DeepQAgent(
-            #     agent_number=0,
-            #     learning_rate=0.00001,
-            #     gamma=0.9,
-            #     epsilon_decay=0.0005,
-            #     memory_size=100000,
-            #     batch_size=32,
-            #     tau=0.1,
-            #     epsilon_stop=0.3,
-            #     battery_size=battery_size,
-            # ),
-            # DeepQAgent(
-            #     agent_number=1,
-            #     learning_rate=0.00001,
-            #     gamma=0.9,
-            #     epsilon_decay=0.0005,
-            #     memory_size=100000,
-            #     batch_size=32,
-            #     tau=0.1,
-            #     epsilon_stop=0.3,
-            #     battery_size=battery_size,
-            # ),
-            # QAgent(0)
-            RandomAgent(0, 0.9),
-            RandomAgent(1, 0.9),
+            DeepQAgent(
+                agent_number=0,
+                learning_rate=0.00001,
+                gamma=0.9,
+                epsilon_decay=0.0005,
+                memory_size=100000,
+                batch_size=32,
+                tau=0.1,
+                epsilon_stop=0.3,
+                battery_size=battery_size,
+            ),
+            DeepQAgent(
+                agent_number=1,
+                learning_rate=0.00001,
+                gamma=0.9,
+                epsilon_decay=0.0005,
+                memory_size=100000,
+                batch_size=32,
+                tau=0.1,
+                epsilon_stop=0.3,
+                battery_size=battery_size,
+            )
         ]
         # Iterate through each agent for `iters` iterations
         # for agent in agents:
@@ -247,9 +244,6 @@ def main(
                 obs, reward, terminated, info = env.step(actions, agent.agent_number)
 
                 new_state = info["agent_pos"][agent.agent_number]
-                # print("info: ", info)
-                # print("world_stats: ", env.world_stats)
-                # print("reward: ", reward)
 
                 converged = agent.process_reward(
                     obs,
@@ -292,7 +286,7 @@ def main(
             1000,
             out,
             sigma=0,
-            agent_start_pos=[[1, 2], [4, 3]],
+            agent_start_pos=None,
             custom_file_name=fname + f"-converged-{agent.converged}-n-iters-{i}",
             battery_size=battery_size,
         )
