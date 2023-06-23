@@ -187,7 +187,7 @@ def main(
         # add all agents to test
         agents = [
             DeepQAgent(
-                agent_number=1,
+                agent_number=0,
                 learning_rate=0.00001,
                 gamma=0.9,
                 epsilon_decay=0.0005,
