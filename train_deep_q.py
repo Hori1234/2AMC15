@@ -1,6 +1,6 @@
 """Train.
 
-Train your RL Agent in this file.
+Train your Multi-Agent setting in this file.
 Feel free to modify this file as you need.
 
 In this example training script, we use command line arguments. Feel free to
@@ -86,7 +86,6 @@ def parse_args():
     p.add_argument(
         "--no_battery", action="store_true", help="Disables the battery feature."
     )
-
     return p.parse_args()
 
 
@@ -108,7 +107,7 @@ def reward_function(grid: Grid, info: dict, agent_number: int) -> float:
     if info["agent_charging"][agent_number] == True:
         return float(10)
     elif info["agent_moved"][agent_number] == False:
-        return float(-50)
+        return float(-5)
     elif sum(info["dirt_cleaned"]) < 1:
         return float(-1)
     else:
@@ -133,14 +132,6 @@ def battery_reward_function(grid: Grid, info: dict, agent_number: int) -> float:
         # Reward if at charger after cleaning everything
         if grid.sum_dirt() == 0:
             return float(20)
-
-        # # punished for going to charger with enough battery left
-        # elif info["battery_left"][0] > 20:
-        #     return float(-5)
-
-        # # reward for going to charger with low battery
-        # elif info["battery_left"][0] < 10:
-        #     return float(20)
 
     # punish heavily for running out of battery
     elif info["battery_left"][agent_number] == 0:
@@ -173,9 +164,9 @@ def main(
     # add two grid paths we'll use for evaluating
     grid_paths = [
         # Path("grid_configs/test_2_chargers_bit_bigger.grd"),
+        # Path("grid_configs/8x8_small_test_room_multi.grd"),
+        # Path("grid_configs/wall_dirt_multi_agents.grd"),
         Path("grid_configs/small_test.grd"),
-        # Path("grid_configs/10x10_2_charge.grd"),
-        # Path("grid_configs/20-10-grid.grd"),
         # Path("grid_configs/rooms-1.grd"),
         # Path("grid_configs/maze-1.grd"),
         # Path("grid_configs/walldirt-1.grd"),
@@ -203,7 +194,7 @@ def main(
         # add all agents to test
         agents = [
             DeepQAgent(
-                agent_number=0,
+                agent_number=1,
                 learning_rate=0.00001,
                 gamma=0.9,
                 epsilon_decay=0.0005,
@@ -212,7 +203,8 @@ def main(
                 tau=0.1,
                 epsilon_stop=0.3,
                 battery_size=battery_size,
-            ),
+            )
+            ,
             DeepQAgent(
                 agent_number=1,
                 learning_rate=0.00001,
@@ -226,9 +218,9 @@ def main(
             )
         ]
         # Iterate through each agent for `iters` iterations
-        # for agent in agents:
+
         fname = f"{type(agents[0]).__name__}-gamma-{agents[0].gamma}-n_iters{iters}-time-{time.time()}"
-        #
+
         print("Agent is ", type(agents[0]).__name__, " gamma is ", agents[0].gamma)
         for i in trange(iters):
             for agent in agents:
@@ -250,16 +242,15 @@ def main(
                     info,
                     reward,
                     old_state,
-                    new_state,
+                    # new_state,
                     action,
                     old_battery_state,
-                    terminated,
+                    # terminated,
                 )
                 # If the agent is terminated, we reset the env.
                 if terminated:
                     obs, info, world_stats = env.reset()
-                    # print(f"Epsilon: {agent.eps}")
-                    # print("Terminated")
+
                 if (old_tile_state != agent.tile_state) or terminated:
                     for other_agent in agents:
                         if other_agent != agent:
