@@ -163,15 +163,8 @@ def main(
 
     # add two grid paths we'll use for evaluating
     grid_paths = [
-        # Path("grid_configs/test_2_chargers_bit_bigger.grd"),
-        # Path("grid_configs/8x8_small_test_room_multi.grd"),
-        # Path("grid_configs/wall_dirt_multi_agents.grd"),
-        Path("grid_configs/small_test.grd"),
-        # Path("grid_configs/rooms-1.grd"),
-        # Path("grid_configs/maze-1.grd"),
-        # Path("grid_configs/walldirt-1.grd"),
-        # Path("grid_configs/walldirt-2.grd"),
-        # Path("grid_configs/simple1.grd"),
+        Path("grid_configs/8x8_small_test_room_multi.grd"),
+        Path("grid_configs/wall_dirt_multi_agents.grd"),
     ]
 
     for grid in grid_paths:
